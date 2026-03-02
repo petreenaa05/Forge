@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(choco:*)",
+      "Bash(git clone:*)",
+      "Bash(C:\\\\src\\\\flutter\\\\bin\\\\flutter doctor:*)",
+      "Bash(\"/c/src/flutter/bin/flutter\" doctor)",
+      "Bash(~/flutter_sdk/bin/flutter doctor:*)",
+      "Bash(export PATH=\"$HOME/flutter_sdk/bin:$PATH\")",
+      "Bash(flutter --version:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(powershell.exe -Command \"[Environment]::SetEnvironmentVariable\\(''Path'', [Environment]::GetEnvironmentVariable\\(''Path'', ''User''\\) + '';C:\\\\Users\\\\Trinaww\\\\flutter_sdk\\\\bin'', ''User''\\)\")",
+      "Bash(powershell.exe:*)"
+    ]
+  }
+}
