@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   // Forge Color Palette
   static const Color primary = Color(0xFFA82323); // Deep Burgundy-Red
-  static const Color secondary = Color(0xFFFEFFD3); // Light Cream/Pale Yellow
+  static const Color secondary = Color(0xFFFFFFFF); // White
   static const Color tertiary = Color(0xFF6D9E51); // Sage Green
 
   static const Color primaryLight = Color(0xFFD63C3C); // Lighter burgundy

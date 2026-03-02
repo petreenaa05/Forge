@@ -132,7 +132,7 @@ class _OtpStepState extends State<OtpStep> with TickerProviderStateMixin {
               // Demo OTP display (for hackathon)
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEFFD3),
+                  color: const Color(0xFFFFF9E6),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                   borderRadius: BorderRadius.circular(12),
                 ),

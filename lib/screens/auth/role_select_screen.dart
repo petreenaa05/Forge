@@ -61,7 +61,7 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
     final isDesktop = screenWidth > 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFEFFD3), // Secondary cream background
+      backgroundColor: const Color(0xFFFFFFFF), // White background
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

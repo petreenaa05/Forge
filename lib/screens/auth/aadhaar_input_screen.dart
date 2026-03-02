@@ -42,7 +42,7 @@ class _AadhaarInputScreenState extends State<AadhaarInputScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFEFFD3), // Secondary color
+      backgroundColor: const Color(0xFFFFFFFF), // White background
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
