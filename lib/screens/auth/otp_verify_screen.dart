@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:forge/providers/auth_provider.dart';
-import 'package:forge/providers/user_provider.dart';
 import 'package:forge/core/theme/app_theme.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
@@ -47,7 +46,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
-    final userProvider = context.read<UserProvider>();
 
     final success = await authProvider.verifyOtp(_otpController.text.trim());
 
@@ -73,24 +71,8 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
 
     if (!mounted) return;
 
-    // ── Then navigate ──────────────────────────────────────
-    final uid = authProvider.uid;
-    if (uid == null) {
-      if (mounted) Navigator.of(context).pushReplacementNamed('/login');
-      return;
-    }
-
-    await userProvider.loadUser(uid);
-
-    if (!mounted) return;
-
-    if (userProvider.user == null) {
-      Navigator.of(context).pushReplacementNamed('/role-select');
-    } else if (userProvider.user!.role == 'freelancer') {
-      Navigator.of(context).pushReplacementNamed('/provider-home');
-    } else {
-      Navigator.of(context).pushReplacementNamed('/client-home');
-    }
+    // ── Then navigate to Aadhaar verification ──────────────────
+    Navigator.of(context).pushReplacementNamed('/aadhaar-input');
   }
 
   Future<void> _resendOtp(String phone) async {
@@ -168,10 +150,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                 const SizedBox(height: 12),
                 const Text(
                   'Authentication successful',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const SizedBox(height: 40),
                 const SizedBox(
@@ -185,10 +164,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                 const SizedBox(height: 12),
                 const Text(
                   'Setting up your account…',
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.white60, fontSize: 13),
                 ),
               ],
             ),
@@ -198,8 +174,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
     }
 
     // ── Normal OTP entry screen ──────────────────────────────
-    final phone =
-        ModalRoute.of(context)?.settings.arguments as String? ?? '';
+    final phone = ModalRoute.of(context)?.settings.arguments as String? ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -276,7 +251,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(8),
@@ -301,9 +278,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                       keyboardType: TextInputType.number,
                       maxLength: 6,
                       textAlign: TextAlign.center,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -349,8 +324,10 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: Colors.red, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 2,
+                          ),
                         ),
                       ),
                       validator: (val) {
@@ -375,8 +352,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen>
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              AppTheme.primary.withValues(alpha: 0.5),
+                          disabledBackgroundColor: AppTheme.primary.withValues(
+                            alpha: 0.5,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),

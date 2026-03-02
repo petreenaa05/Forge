@@ -5,9 +5,11 @@ import 'package:forge/providers/auth_provider.dart';
 import 'package:forge/providers/user_provider.dart';
 import 'package:forge/core/theme/app_theme.dart';
 import 'package:forge/core/constants/app_constants.dart';
+import 'package:forge/widgets/auth/role_card.dart';
 
-/// First-time role selection screen.
+/// Professional role selection screen.
 /// User chooses "I Offer Services" (Freelancer) or "I Need Services" (Client).
+/// Features selection state, hover effects, and responsive layout.
 class RoleSelectScreen extends StatefulWidget {
   const RoleSelectScreen({super.key});
 
@@ -16,9 +18,12 @@ class RoleSelectScreen extends StatefulWidget {
 }
 
 class _RoleSelectScreenState extends State<RoleSelectScreen> {
+  String? _selectedRole;
   bool _isLoading = false;
 
-  Future<void> _selectRole(String role) async {
+  Future<void> _handleContinue() async {
+    if (_selectedRole == null) return;
+
     setState(() => _isLoading = true);
 
     final authProvider = context.read<AuthProvider>();
@@ -36,14 +41,14 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
       uid: uid,
       name: '',
       phone: phone,
-      role: role,
+      role: _selectedRole!,
     );
 
     await userProvider.createUser(newUser);
 
     if (!mounted) return;
 
-    if (role == UserRole.freelancer) {
+    if (_selectedRole == UserRole.freelancer) {
       Navigator.of(context).pushReplacementNamed('/provider-setup');
     } else {
       Navigator.of(context).pushReplacementNamed('/client-setup');
@@ -52,161 +57,164 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 900;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFEFFD3), // Secondary cream background
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 60),
-
-              // Header
-              const Text(
-                '⚒️',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 48),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'How will you use Forge?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppTheme.textDark,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'You can switch roles anytime from your profile.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppTheme.textMedium,
-                  fontSize: 14,
-                ),
-              ),
-
-              const SizedBox(height: 48),
-
-              // Freelancer card
-              _RoleCard(
-                emoji: '👩‍🔧',
-                title: 'I Offer Services',
-                subtitle:
-                    'Create your professional profile, accept jobs, and build your reputation.',
-                color: AppTheme.primary,
-                isLoading: _isLoading,
-                onTap: () => _selectRole(UserRole.freelancer),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Client card
-              _RoleCard(
-                emoji: '👤',
-                title: 'I Need Services',
-                subtitle:
-                    'Browse skilled professionals, book services, and leave reviews.',
-                color: AppTheme.accent,
-                isLoading: _isLoading,
-                onTap: () => _selectRole(UserRole.client),
-              ),
-
-              const Spacer(),
-
-              // Footer
-              const Text(
-                'Forge — Women\'s Services Marketplace',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppTheme.textMedium,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleCard extends StatelessWidget {
-  final String emoji;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  const _RoleCard({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shadowColor: color.withOpacity(0.3),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: InkWell(
-        onTap: isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.2)),
-          ),
-          child: Row(
-            children: [
-              // Emoji circle
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(emoji, style: const TextStyle(fontSize: 32)),
-              ),
-              const SizedBox(width: 16),
-              // Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 900),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Forge Logo Icon
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textMedium,
-                        height: 1.4,
-                      ),
+                    child: const Icon(
+                      Icons.handyman_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Title
+                  const Text(
+                    'How will you use Forge?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF2D2D2D),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Subtitle
+                  const Text(
+                    'You can switch roles anytime from your profile.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15, color: Color(0xFF666666)),
+                  ),
+                  const SizedBox(height: 56),
+
+                  // Role Cards
+                  if (isDesktop) ...[
+                    // Side-by-side layout for desktop
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: RoleCard(
+                            icon: Icons.work_outline_rounded,
+                            title: 'I Offer Services',
+                            description:
+                                'Create your professional profile, accept jobs, and build your reputation.',
+                            accentColor: AppTheme.primary,
+                            isSelected: _selectedRole == UserRole.freelancer,
+                            onTap: () => setState(
+                              () => _selectedRole = UserRole.freelancer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: RoleCard(
+                            icon: Icons.person_outline_rounded,
+                            title: 'I Need Services',
+                            description:
+                                'Browse skilled professionals, book services, and leave reviews.',
+                            accentColor: AppTheme.tertiary,
+                            isSelected: _selectedRole == UserRole.client,
+                            onTap: () =>
+                                setState(() => _selectedRole = UserRole.client),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    // Stacked layout for tablet and mobile
+                    RoleCard(
+                      icon: Icons.work_outline_rounded,
+                      title: 'I Offer Services',
+                      description:
+                          'Create your professional profile, accept jobs, and build your reputation.',
+                      accentColor: AppTheme.primary,
+                      isSelected: _selectedRole == UserRole.freelancer,
+                      onTap: () =>
+                          setState(() => _selectedRole = UserRole.freelancer),
+                    ),
+                    const SizedBox(height: 20),
+                    RoleCard(
+                      icon: Icons.person_outline_rounded,
+                      title: 'I Need Services',
+                      description:
+                          'Browse skilled professionals, book services, and leave reviews.',
+                      accentColor: AppTheme.tertiary,
+                      isSelected: _selectedRole == UserRole.client,
+                      onTap: () =>
+                          setState(() => _selectedRole = UserRole.client),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 48),
+
+                  // Continue Button
+                  SizedBox(
+                    width: isDesktop ? 400 : double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _selectedRole == null || _isLoading
+                          ? null
+                          : _handleContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        disabledBackgroundColor: const Color(0xFFE0E0E0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: _selectedRole != null ? 2 : 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Footer
+                  const Text(
+                    'Forge — Women\'s Services Marketplace',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Color(0xFF999999)),
+                  ),
+                ],
               ),
-              Icon(Icons.arrow_forward_ios, color: color, size: 18),
-            ],
+            ),
           ),
         ),
       ),

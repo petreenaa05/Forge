@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF6B21A8);
-  static const Color primaryLight = Color(0xFF9333EA);
-  static const Color accent = Color(0xFFEC4899);
-  static const Color background = Color(0xFFFAF5FF);
+  // Forge Color Palette
+  static const Color primary = Color(0xFFA82323); // Deep Burgundy-Red
+  static const Color secondary = Color(0xFFFEFFD3); // Light Cream/Pale Yellow
+  static const Color tertiary = Color(0xFF6D9E51); // Sage Green
+
+  static const Color primaryLight = Color(0xFFD63C3C); // Lighter burgundy
+  static const Color accent = Color(0xFF6D9E51); // Sage green as accent
+  static const Color background = Color(0xFFFAFAFA);
   static const Color surface = Colors.white;
-  static const Color textDark = Color(0xFF1E1B4B);
+  static const Color textDark = Color(0xFF2D2D2D);
   static const Color textMedium = Color(0xFF6B7280);
-  static const Color verified = Color(0xFF10B981);
+  static const Color verified = Color(0xFF6D9E51);
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -16,8 +20,10 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         brightness: Brightness.light,
-        background: background,
         surface: surface,
+        primary: primary,
+        secondary: secondary,
+        tertiary: tertiary,
       ),
       scaffoldBackgroundColor: background,
       appBarTheme: const AppBarTheme(
@@ -42,7 +48,9 @@ class AppTheme {
           backgroundColor: primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
@@ -61,7 +69,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primary, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFFF3E8FF),

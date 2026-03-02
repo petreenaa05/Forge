@@ -61,6 +61,16 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Set user data from email/password login
+  Future<void> setLoginUser({
+    required String email,
+    required String uid,
+  }) async {
+    _uid = uid;
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> signOut() async {
     _authService.signOut();
     _uid = null;
