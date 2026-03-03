@@ -38,10 +38,172 @@ class ProviderHomeScreen extends StatefulWidget {
 class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   int selectedTab = 0;
 
+  // ── Local sample jobs (used when Firestore is empty) ────────────────────
+  late List<JobModel> _sampleJobs;
+
   @override
   void initState() {
     super.initState();
+    _sampleJobs = _buildSampleJobs();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+  }
+
+  static List<JobModel> _buildSampleJobs() {
+    final now = DateTime.now();
+    return [
+      // ── Incoming (requested) ──
+      JobModel(
+        id: 'sample-1',
+        clientId: 'c1',
+        clientName: 'Ananya Sharma',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'Ceiling Fan Installation',
+        description: 'Install 3 ceiling fans in living room & bedrooms',
+        status: JobStatus.requested,
+        scheduledDate: now.add(const Duration(days: 2)),
+        createdAt: now.subtract(const Duration(hours: 3)),
+      ),
+      JobModel(
+        id: 'sample-2',
+        clientId: 'c2',
+        clientName: 'Priya Patel',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'Wiring Repair',
+        description: 'Short circuit issue in kitchen area',
+        status: JobStatus.requested,
+        scheduledDate: now.add(const Duration(days: 3)),
+        createdAt: now.subtract(const Duration(hours: 1)),
+      ),
+      JobModel(
+        id: 'sample-3',
+        clientId: 'c3',
+        clientName: 'Meera Reddy',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'Smart Switch Setup',
+        description: 'Install smart switches in 2 rooms',
+        status: JobStatus.requested,
+        scheduledDate: now.add(const Duration(days: 5)),
+        createdAt: now.subtract(const Duration(minutes: 30)),
+      ),
+      // ── Upcoming (confirmed / active) ──
+      JobModel(
+        id: 'sample-4',
+        clientId: 'c4',
+        clientName: 'Kavitha Iyer',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'Full House Wiring',
+        description: 'Complete rewiring for 2BHK apartment',
+        status: JobStatus.confirmed,
+        scheduledDate: now.add(const Duration(days: 1)),
+        createdAt: now.subtract(const Duration(days: 2)),
+      ),
+      JobModel(
+        id: 'sample-5',
+        clientId: 'c5',
+        clientName: 'Deepa Nair',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'Generator Maintenance',
+        description: 'Annual generator service check',
+        status: JobStatus.confirmed,
+        scheduledDate: now.add(const Duration(days: 4)),
+        createdAt: now.subtract(const Duration(days: 1)),
+      ),
+      // ── Completed ──
+      JobModel(
+        id: 'sample-6',
+        clientId: 'c6',
+        clientName: 'Lakshmi Rao',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'LED Panel Installation',
+        description: 'Install LED panels in office cabin',
+        status: JobStatus.completed,
+        scheduledDate: now.subtract(const Duration(days: 3)),
+        createdAt: now.subtract(const Duration(days: 7)),
+      ),
+      JobModel(
+        id: 'sample-7',
+        clientId: 'c7',
+        clientName: 'Sunita Verma',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'Inverter Setup',
+        description: 'Set up 1.5 KVA inverter with battery',
+        status: JobStatus.completed,
+        scheduledDate: now.subtract(const Duration(days: 5)),
+        createdAt: now.subtract(const Duration(days: 10)),
+      ),
+      JobModel(
+        id: 'sample-8',
+        clientId: 'c8',
+        clientName: 'Ritu Gupta',
+        providerId: 'me',
+        category: 'Electrician',
+        title: 'MCB Panel Replacement',
+        description: 'Replace old MCB panel with new modular panel',
+        status: JobStatus.completed,
+        scheduledDate: now.subtract(const Duration(days: 8)),
+        createdAt: now.subtract(const Duration(days: 12)),
+      ),
+    ];
+  }
+
+  /// Accept a sample job locally — move from requested → confirmed.
+  void _acceptSampleJob(String id) {
+    setState(() {
+      _sampleJobs = _sampleJobs.map((j) {
+        if (j.id == id && j.status == JobStatus.requested) {
+          return JobModel(
+            id: j.id,
+            clientId: j.clientId,
+            clientName: j.clientName,
+            providerId: j.providerId,
+            category: j.category,
+            title: j.title,
+            description: j.description,
+            status: JobStatus.confirmed,
+            scheduledDate: j.scheduledDate,
+            createdAt: j.createdAt,
+          );
+        }
+        return j;
+      }).toList();
+    });
+  }
+
+  /// Reject a sample job locally.
+  void _rejectSampleJob(String id) {
+    setState(() {
+      _sampleJobs = _sampleJobs.where((j) => j.id != id).toList();
+    });
+  }
+
+  /// Complete a sample job locally.
+  void _completeSampleJob(String id) {
+    setState(() {
+      _sampleJobs = _sampleJobs.map((j) {
+        if (j.id == id && j.status == JobStatus.confirmed) {
+          return JobModel(
+            id: j.id,
+            clientId: j.clientId,
+            clientName: j.clientName,
+            providerId: j.providerId,
+            category: j.category,
+            title: j.title,
+            description: j.description,
+            status: JobStatus.completed,
+            scheduledDate: j.scheduledDate,
+            createdAt: j.createdAt,
+          );
+        }
+        return j;
+      }).toList();
+    });
   }
 
   Future<void> _loadData() async {
@@ -133,11 +295,33 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     final chatProvider = context.watch<ChatProvider>();
     final user = userProvider.user;
 
-    final tabs = [
-      jobProvider.incomingJobs,
-      jobProvider.activeJobs,
-      jobProvider.completedJobs,
-    ];
+    // Detect new user: no ratings, no completed jobs
+    final isNewUser = user != null &&
+        user.totalRatings == 0 &&
+        user.completedJobs == 0 &&
+        user.rating == 0.0;
+
+    // Use Firestore jobs when available; show samples only for demo users
+    final hasRealJobs = jobProvider.providerJobs.isNotEmpty;
+    final showSamples = !hasRealJobs && !isNewUser;
+
+    final incoming = hasRealJobs
+        ? jobProvider.incomingJobs
+        : showSamples
+            ? _sampleJobs.where((j) => j.status == JobStatus.requested).toList()
+            : <JobModel>[];
+    final active = hasRealJobs
+        ? jobProvider.activeJobs
+        : showSamples
+            ? _sampleJobs.where((j) => j.status == JobStatus.confirmed).toList()
+            : <JobModel>[];
+    final completed = hasRealJobs
+        ? jobProvider.completedJobs
+        : showSamples
+            ? _sampleJobs.where((j) => j.status == JobStatus.completed).toList()
+            : <JobModel>[];
+
+    final tabs = [incoming, active, completed];
 
     final firstName = user?.name.split(' ').first ?? 'there';
 
@@ -184,6 +368,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             const SliverToBoxAdapter(child: _ThinDivider()),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
+            // Reviews & Ratings section removed
+
             // ── Section Title ─────────────────────────────────
             const SliverToBoxAdapter(
               child: _SectionHeader(title: 'My Jobs'),
@@ -203,19 +389,19 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                     children: [
                       _TabButton(
                         title: 'Incoming',
-                        count: jobProvider.incomingJobs.length,
+                        count: incoming.length,
                         isSelected: selectedTab == 0,
                         onTap: () => setState(() => selectedTab = 0),
                       ),
                       _TabButton(
                         title: 'Active',
-                        count: jobProvider.activeJobs.length,
+                        count: active.length,
                         isSelected: selectedTab == 1,
                         onTap: () => setState(() => selectedTab = 1),
                       ),
                       _TabButton(
                         title: 'Completed',
-                        count: jobProvider.completedJobs.length,
+                        count: completed.length,
                         isSelected: selectedTab == 2,
                         onTap: () => setState(() => selectedTab = 2),
                       ),
@@ -237,7 +423,14 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                 delegate: SliverChildBuilderDelegate(
                   (_, i) => Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    child: _JobCard(job: tabs[selectedTab][i], provider: jobProvider),
+                    child: _JobCard(
+                      job: tabs[selectedTab][i],
+                      provider: jobProvider,
+                      isSample: showSamples,
+                      onAcceptSample: _acceptSampleJob,
+                      onRejectSample: _rejectSampleJob,
+                      onCompleteSample: _completeSampleJob,
+                    ),
                   ),
                   childCount: tabs[selectedTab].length,
                 ),
@@ -782,7 +975,18 @@ class _TabButtonState extends State<_TabButton> {
 class _JobCard extends StatefulWidget {
   final JobModel job;
   final JobProvider provider;
-  const _JobCard({required this.job, required this.provider});
+  final bool isSample;
+  final void Function(String id)? onAcceptSample;
+  final void Function(String id)? onRejectSample;
+  final void Function(String id)? onCompleteSample;
+  const _JobCard({
+    required this.job,
+    required this.provider,
+    this.isSample = false,
+    this.onAcceptSample,
+    this.onRejectSample,
+    this.onCompleteSample,
+  });
 
   @override
   State<_JobCard> createState() => _JobCardState();
@@ -875,19 +1079,29 @@ class _JobCardState extends State<_JobCard> {
               label: 'Accept',
               filled: true,
               onTap: () {
-                widget.provider.updateJobStatus(job.id, JobStatus.confirmed);
-                Navigator.of(context).pushNamed('/chat', arguments: {
-                  'jobId': job.id,
-                  'otherUid': job.clientId,
-                  'otherName': job.clientName,
-                });
+                if (widget.isSample) {
+                  widget.onAcceptSample?.call(job.id);
+                } else {
+                  widget.provider.updateJobStatus(job.id, JobStatus.confirmed);
+                  Navigator.of(context).pushNamed('/chat', arguments: {
+                    'jobId': job.id,
+                    'otherUid': job.clientId,
+                    'otherName': job.clientName,
+                  });
+                }
               },
             ),
             const SizedBox(width: 6),
             _ActionChip(
               label: 'Reject',
               filled: false,
-              onTap: () => widget.provider.updateJobStatus(job.id, JobStatus.rejected),
+              onTap: () {
+                if (widget.isSample) {
+                  widget.onRejectSample?.call(job.id);
+                } else {
+                  widget.provider.updateJobStatus(job.id, JobStatus.rejected);
+                }
+              },
             ),
           ],
         );
@@ -909,7 +1123,13 @@ class _JobCardState extends State<_JobCard> {
             _ActionChip(
               label: 'Complete',
               filled: true,
-              onTap: () => widget.provider.updateJobStatus(job.id, JobStatus.completed),
+              onTap: () {
+                if (widget.isSample) {
+                  widget.onCompleteSample?.call(job.id);
+                } else {
+                  widget.provider.updateJobStatus(job.id, JobStatus.completed);
+                }
+              },
             ),
           ],
         );
@@ -1029,6 +1249,8 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+// =============================================================================
+// _SampleReviewsList — sample client reviews for the freelancer dashboard
 // =============================================================================
 // _EmptyHint
 // =============================================================================
