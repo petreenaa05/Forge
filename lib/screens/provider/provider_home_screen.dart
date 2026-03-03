@@ -258,14 +258,15 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
       automaticallyImplyLeading: false,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      titleSpacing: 20,
+      toolbarHeight: 64,
+      titleSpacing: 24,
       title: const Text(
         'Forge',
         style: TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          fontSize: 28,
           color: _C.white,
-          letterSpacing: 0.8,
+          letterSpacing: 1.0,
         ),
       ),
       actions: [

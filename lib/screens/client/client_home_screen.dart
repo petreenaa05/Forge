@@ -35,91 +35,11 @@ class _C {
 }
 
 // =============================================================================
-// Sample Freelancers Data (Mock)
+// =============================================================================
+// Sample Freelancers Data — empty (populated from Firestore)
 // =============================================================================
 
-final List<UserModel> _kSampleFreelancers = [
-  UserModel(
-    uid: 'sample_1',
-    name: 'Priya Sharma',
-    phone: '+91 98765 43210',
-    role: 'freelancer',
-    rating: 4.9,
-    totalRatings: 127,
-    verified: true,
-    available: true,
-    skills: ['Electrician', 'Home Automation Technician'],
-    location: 'Mumbai, Maharashtra',
-    bio: 'Certified electrical engineer with 8+ years of experience in residential and commercial wiring.',
-    experience: 8,
-    photoUrl: null,
-    completedJobs: 234,
-  ),
-  UserModel(
-    uid: 'sample_2',
-    name: 'Anjali Verma',
-    phone: '+91 87654 32109',
-    role: 'freelancer',
-    rating: 4.8,
-    totalRatings: 89,
-    verified: true,
-    available: true,
-    skills: ['Plumber', 'AC Technician'],
-    location: 'Delhi, NCR',
-    bio: 'Expert plumber specializing in modern bathroom fittings and AC installation.',
-    experience: 6,
-    photoUrl: null,
-    completedJobs: 156,
-  ),
-  UserModel(
-    uid: 'sample_3',
-    name: 'Kavitha Reddy',
-    phone: '+91 76543 21098',
-    role: 'freelancer',
-    rating: 4.7,
-    totalRatings: 156,
-    verified: true,
-    available: false,
-    skills: ['Carpenter', 'Civil Engineer'],
-    location: 'Bangalore, Karnataka',
-    bio: 'Civil engineer turned carpenter. Custom furniture and home renovations.',
-    experience: 10,
-    photoUrl: null,
-    completedJobs: 312,
-  ),
-  UserModel(
-    uid: 'sample_4',
-    name: 'Meera Patel',
-    phone: '+91 65432 10987',
-    role: 'freelancer',
-    rating: 4.6,
-    totalRatings: 67,
-    verified: false,
-    available: true,
-    skills: ['Gym Trainer', 'Bike Repair Specialist'],
-    location: 'Ahmedabad, Gujarat',
-    bio: 'Certified fitness trainer and passionate bike mechanic.',
-    experience: 4,
-    photoUrl: null,
-    completedJobs: 89,
-  ),
-  UserModel(
-    uid: 'sample_5',
-    name: 'Sunita Rao',
-    phone: '+91 54321 09876',
-    role: 'freelancer',
-    rating: 4.9,
-    totalRatings: 203,
-    verified: true,
-    available: true,
-    skills: ['Car Mechanic', 'Auto Body Repair Expert'],
-    location: 'Chennai, Tamil Nadu',
-    bio: 'Award-winning auto repair specialist. All car brands welcome.',
-    experience: 12,
-    photoUrl: null,
-    completedJobs: 456,
-  ),
-];
+final List<UserModel> _kSampleFreelancers = [];
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -169,12 +89,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       }
     }
     
-    // Sample notifications
-    _notifications = [
-      {'title': 'New Electrician Available', 'skill': 'Electrician', 'time': DateTime.now().subtract(const Duration(minutes: 30))},
-      {'title': 'Priya Sharma is now online', 'skill': 'Home Automation', 'time': DateTime.now().subtract(const Duration(hours: 1))},
-      {'title': 'New Plumber in your area', 'skill': 'Plumber', 'time': DateTime.now().subtract(const Duration(hours: 2))},
-    ];
+    // Notifications — populated from real data
+    _notifications = [];
   }
 
   Future<void> _switchToFreelancer() async {
@@ -448,14 +364,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       automaticallyImplyLeading: false,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      titleSpacing: 20,
+      toolbarHeight: 64,
+      titleSpacing: 24,
       title: const Text(
         'Forge',
         style: TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          fontSize: 28,
           color: _C.white,
-          letterSpacing: 0.8,
+          letterSpacing: 1.0,
         ),
       ),
       actions: [

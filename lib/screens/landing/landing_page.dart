@@ -17,7 +17,6 @@ class _C {
 }
 
 /// Landing page — the first screen users see.
-/// Showcases Forge and provides Sign In / Sign Up entry points.
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
 
@@ -50,7 +49,7 @@ class LandingPage extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  NAV BAR — with hover on links and buttons
+//  NAV BAR — taller, bigger fonts
 // ═══════════════════════════════════════════════════════════════════
 class _NavBar extends StatelessWidget {
   final bool isMobile;
@@ -59,8 +58,8 @@ class _NavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      height: 84,
+      padding: const EdgeInsets.symmetric(horizontal: 36),
       decoration: const BoxDecoration(
         color: _C.white,
         border: Border(bottom: BorderSide(color: _C.border)),
@@ -71,33 +70,30 @@ class _NavBar extends StatelessWidget {
           const Text(
             'Forge',
             style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
               color: _C.maroon,
-              letterSpacing: 1,
+              letterSpacing: 1.2,
             ),
           ),
           const Spacer(),
 
-          // Nav links (desktop only)
           if (!isMobile) ...[
             const _HoverNavLink(text: 'About'),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const _HoverNavLink(text: 'Features'),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const _HoverNavLink(text: 'How It Works'),
-            const SizedBox(width: 24),
+            const SizedBox(width: 28),
           ],
 
-          // Sign Up button
           _HoverButton(
             label: 'Sign Up',
             filled: false,
             onTap: () => Navigator.pushNamed(context, '/signup'),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
 
-          // Sign In button
           _HoverButton(
             label: 'Sign In',
             filled: true,
@@ -131,7 +127,7 @@ class _HoverNavLinkState extends State<_HoverNavLink> {
         onTap: () {},
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: _hovered ? _C.maroon.withValues(alpha: 0.05) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
@@ -141,7 +137,7 @@ class _HoverNavLinkState extends State<_HoverNavLink> {
             style: TextStyle(
               color: _hovered ? _C.maroon : _C.grey,
               fontWeight: _hovered ? FontWeight.w600 : FontWeight.w500,
-              fontSize: 14,
+              fontSize: 16,
             ),
           ),
         ),
@@ -176,11 +172,11 @@ class _HoverButtonState extends State<_HoverButton> {
         onTapUp: (_) { setState(() => _pressed = false); widget.onTap(); },
         onTapCancel: () => setState(() => _pressed = false),
         child: AnimatedScale(
-          scale: _pressed ? 0.96 : 1.0,
+          scale: _pressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 100),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
             decoration: BoxDecoration(
               color: widget.filled
                   ? (_hovered ? _C.maroonDark : _C.maroon)
@@ -189,15 +185,16 @@ class _HoverButtonState extends State<_HoverButton> {
                 color: _C.maroon,
                 width: widget.filled ? 0 : 2,
               ),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: _hovered && widget.filled
-                  ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))]
+                  ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.25), blurRadius: 14, offset: const Offset(0, 5))]
                   : [],
             ),
             child: Text(
               widget.label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
+                fontSize: 15,
                 color: widget.filled ? _C.white : _C.maroon,
               ),
             ),
@@ -209,7 +206,7 @@ class _HoverButtonState extends State<_HoverButton> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  HERO SECTION — with animated entrance
+//  HERO SECTION — GSAP-style staggered entrance
 // ═══════════════════════════════════════════════════════════════════
 class _HeroSection extends StatefulWidget {
   final bool isMobile;
@@ -220,20 +217,51 @@ class _HeroSection extends StatefulWidget {
 }
 
 class _HeroSectionState extends State<_HeroSection>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double> _fade;
-  late final Animation<Offset> _slide;
+  // Staggered animations like GSAP timeline
+  late final Animation<double> _titleFade;
+  late final Animation<Offset> _titleSlide;
+  late final Animation<double> _subtitleFade;
+  late final Animation<Offset> _subtitleSlide;
+  late final Animation<double> _buttonsFade;
+  late final Animation<double> _badgesFade;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900))
-      ..forward();
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..forward();
+
+    // GSAP-like stagger: title → subtitle → buttons → badges
+    _titleFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
+    );
+    _titleSlide = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+        .animate(CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.0, 0.35, curve: Curves.easeOutCubic),
+    ));
+    _subtitleFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
+    );
+    _subtitleSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+        .animate(CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.2, 0.5, curve: Curves.easeOutCubic),
+    ));
+    _buttonsFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.4, 0.7, curve: Curves.easeOut),
+    );
+    _badgesFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.6, 0.9, curve: Curves.easeOut),
+    );
   }
 
   @override
@@ -245,7 +273,7 @@ class _HeroSectionState extends State<_HeroSection>
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: widget.isMobile ? 24 : 80,
-        vertical: widget.isMobile ? 48 : 80,
+        vertical: widget.isMobile ? 56 : 96,
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -254,66 +282,83 @@ class _HeroSectionState extends State<_HeroSection>
           colors: [_C.heroGrad1, _C.heroGrad2],
         ),
       ),
-      child: FadeTransition(
-        opacity: _fade,
-        child: SlideTransition(
-          position: _slide,
-          child: Column(
-            children: [
-              Text(
+      child: Column(
+        children: [
+          // Title — stagger 1
+          FadeTransition(
+            opacity: _titleFade,
+            child: SlideTransition(
+              position: _titleSlide,
+              child: Text(
                 'Find Trusted Professionals\nNear You',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: widget.isMobile ? 32 : 48,
+                  fontSize: widget.isMobile ? 36 : 54,
                   fontWeight: FontWeight.w900,
                   color: _C.black,
-                  height: 1.2,
+                  height: 1.15,
                 ),
               ),
-              const SizedBox(height: 20),
-              Text(
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Subtitle — stagger 2
+          FadeTransition(
+            opacity: _subtitleFade,
+            child: SlideTransition(
+              position: _subtitleSlide,
+              child: Text(
                 'Forge connects you with verified, skilled service providers.\nBook with confidence — verified via Aadhaar.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: widget.isMobile ? 15 : 18,
+                  fontSize: widget.isMobile ? 16 : 20,
                   color: const Color(0xFF666666),
                   height: 1.6,
                 ),
               ),
-              const SizedBox(height: 36),
-
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 16,
-                runSpacing: 12,
-                children: [
-                  _HoverButton(
-                    label: '  Get Started  ',
-                    filled: true,
-                    onTap: () => Navigator.pushNamed(context, '/signup'),
-                  ),
-                  _HoverButton(
-                    label: '  Learn More  ',
-                    filled: false,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 32,
-                runSpacing: 12,
-                children: const [
-                  _TrustBadge(icon: Icons.verified_user, text: 'Aadhaar Verified'),
-                  _TrustBadge(icon: Icons.star_rounded, text: 'Top Rated Pros'),
-                  _TrustBadge(icon: Icons.security, text: 'Safe & Secure'),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 40),
+
+          // Buttons — stagger 3
+          FadeTransition(
+            opacity: _buttonsFade,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                _HoverButton(
+                  label: '  Get Started  ',
+                  filled: true,
+                  onTap: () => Navigator.pushNamed(context, '/signup'),
+                ),
+                _HoverButton(
+                  label: '  Learn More  ',
+                  filled: false,
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 44),
+
+          // Trust badges — stagger 4
+          FadeTransition(
+            opacity: _badgesFade,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 36,
+              runSpacing: 12,
+              children: const [
+                _TrustBadge(icon: Icons.verified_user, text: 'Aadhaar Verified'),
+                _TrustBadge(icon: Icons.star_rounded, text: 'Top Rated Pros'),
+                _TrustBadge(icon: Icons.security, text: 'Safe & Secure'),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -329,12 +374,12 @@ class _TrustBadge extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: _C.maroon),
-        const SizedBox(width: 6),
+        Icon(icon, size: 20, color: _C.maroon),
+        const SizedBox(width: 8),
         Text(
           text,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             color: _C.grey,
           ),
@@ -345,7 +390,119 @@ class _TrustBadge extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  FEATURES SECTION — with hover cards
+//  SCROLL-TRIGGERED FADE-IN  (GSAP-like "scrollTrigger")
+// ═══════════════════════════════════════════════════════════════════
+class _ScrollFadeIn extends StatefulWidget {
+  final Widget child;
+  final Duration delay;
+  final Duration duration;
+  final Offset slideOffset;
+
+  const _ScrollFadeIn({
+    required this.child,
+    this.delay = Duration.zero,
+    this.duration = const Duration(milliseconds: 600),
+    this.slideOffset = const Offset(0, 40),
+  });
+
+  @override
+  State<_ScrollFadeIn> createState() => _ScrollFadeInState();
+}
+
+class _ScrollFadeInState extends State<_ScrollFadeIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  bool _triggered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: widget.duration);
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(begin: widget.slideOffset, end: Offset.zero)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  void _onVisibility(bool visible) {
+    if (visible && !_triggered) {
+      _triggered = true;
+      Future.delayed(widget.delay, () {
+        if (mounted) _ctrl.forward();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _VisibilityDetector(
+      onVisibilityChanged: _onVisibility,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, child) => Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: _slide.value,
+            child: child,
+          ),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Simple visibility detector using LayoutBuilder + scroll position.
+class _VisibilityDetector extends StatefulWidget {
+  final Widget child;
+  final ValueChanged<bool> onVisibilityChanged;
+  const _VisibilityDetector({required this.child, required this.onVisibilityChanged});
+
+  @override
+  State<_VisibilityDetector> createState() => _VisibilityDetectorState();
+}
+
+class _VisibilityDetectorState extends State<_VisibilityDetector> {
+  final GlobalKey _key = GlobalKey();
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  }
+
+  void _check() {
+    if (!mounted || _visible) return;
+    final ro = _key.currentContext?.findRenderObject() as RenderBox?;
+    if (ro == null || !ro.attached) {
+      // Retry next frame
+      WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+      return;
+    }
+    final pos = ro.localToGlobal(Offset.zero);
+    final screenH = MediaQuery.of(context).size.height;
+    if (pos.dy < screenH + 50) {
+      _visible = true;
+      widget.onVisibilityChanged(true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (_) { _check(); return false; },
+      child: SizedBox(key: _key, child: widget.child),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FEATURES SECTION — staggered scroll-triggered cards
 // ═══════════════════════════════════════════════════════════════════
 class _FeaturesSection extends StatelessWidget {
   final bool isMobile;
@@ -372,21 +529,26 @@ class _FeaturesSection extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 24 : 80,
-        vertical: 64,
+        vertical: 72,
       ),
       color: _C.bgLight,
       child: Column(
         children: [
-          const Text(
-            'Why Choose Forge?',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: _C.black),
+          _ScrollFadeIn(
+            child: const Text(
+              'Why Choose Forge?',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: _C.black),
+            ),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Built for trust, speed, and simplicity.',
-            style: TextStyle(fontSize: 15, color: _C.greyLight),
+          const SizedBox(height: 14),
+          _ScrollFadeIn(
+            delay: const Duration(milliseconds: 100),
+            child: const Text(
+              'Built for trust, speed, and simplicity.',
+              style: TextStyle(fontSize: 16, color: _C.greyLight),
+            ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 44),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -394,10 +556,13 @@ class _FeaturesSection extends StatelessWidget {
               crossAxisCount: isMobile ? 1 : 3,
               mainAxisSpacing: 20,
               crossAxisSpacing: 20,
-              childAspectRatio: isMobile ? 3.2 : 1.6,
+              childAspectRatio: isMobile ? 3.2 : 1.15,
             ),
             itemCount: _features.length,
-            itemBuilder: (_, i) => _FeatureCard(data: _features[i]),
+            itemBuilder: (_, i) => _ScrollFadeIn(
+              delay: Duration(milliseconds: 120 * i),
+              child: _FeatureCard(data: _features[i]),
+            ),
           ),
         ],
       ),
@@ -431,13 +596,13 @@ class _FeatureCardState extends State<_FeatureCard> {
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(26),
         decoration: BoxDecoration(
           color: _C.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: _hovered ? _C.maroon : _C.border),
           boxShadow: _hovered
-              ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.1), blurRadius: 16, offset: const Offset(0, 6))]
+              ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 6))]
               : [],
         ),
         child: Column(
@@ -445,26 +610,26 @@ class _FeatureCardState extends State<_FeatureCard> {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 44, height: 44,
+              width: 48, height: 48,
               decoration: BoxDecoration(
                 color: _hovered ? _C.maroon : _C.maroon.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(widget.data.icon,
-                  color: _hovered ? _C.white : _C.maroon, size: 22),
+                  color: _hovered ? _C.white : _C.maroon, size: 24),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Text(
               widget.data.title,
               style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700,
+                fontSize: 17, fontWeight: FontWeight.w700,
                 color: _hovered ? _C.maroon : const Color(0xFF2D2D2D),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               widget.data.description,
-              style: const TextStyle(fontSize: 13, color: _C.greyLight, height: 1.4),
+              style: const TextStyle(fontSize: 14, color: _C.greyLight, height: 1.5),
             ),
           ],
         ),
@@ -474,7 +639,7 @@ class _FeatureCardState extends State<_FeatureCard> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  HOW IT WORKS SECTION — with hover step tiles
+//  HOW IT WORKS SECTION — staggered scroll-triggered step tiles
 // ═══════════════════════════════════════════════════════════════════
 class _HowItWorksSection extends StatelessWidget {
   final bool isMobile;
@@ -492,25 +657,35 @@ class _HowItWorksSection extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 24 : 80,
-        vertical: 64,
+        vertical: 72,
       ),
       color: _C.white,
       child: Column(
         children: [
-          const Text(
-            'How It Works',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: _C.black),
+          _ScrollFadeIn(
+            child: const Text(
+              'How It Works',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: _C.black),
+            ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 44),
           isMobile
               ? Column(
-                  children: _steps.map((s) => Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: _StepTile(data: s),
-                  )).toList(),
+                  children: List.generate(_steps.length, (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: _ScrollFadeIn(
+                      delay: Duration(milliseconds: 150 * i),
+                      child: _StepTile(data: _steps[i]),
+                    ),
+                  )),
                 )
               : Row(
-                  children: _steps.map((s) => Expanded(child: _StepTile(data: s))).toList(),
+                  children: List.generate(_steps.length, (i) => Expanded(
+                    child: _ScrollFadeIn(
+                      delay: Duration(milliseconds: 200 * i),
+                      child: _StepTile(data: _steps[i]),
+                    ),
+                  )),
                 ),
         ],
       ),
@@ -543,42 +718,42 @@ class _StepTileState extends State<_StepTile> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedScale(
-        scale: _hovered ? 1.05 : 1.0,
+        scale: _hovered ? 1.06 : 1.0,
         duration: const Duration(milliseconds: 200),
         child: Column(
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 56, height: 56,
+              width: 60, height: 60,
               decoration: BoxDecoration(
                 color: _hovered ? _C.maroonDark : _C.maroon,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 boxShadow: _hovered
-                    ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))]
+                    ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 5))]
                     : [],
               ),
               alignment: Alignment.center,
               child: Text(
                 widget.data.number,
                 style: const TextStyle(
-                  color: _C.white, fontSize: 24, fontWeight: FontWeight.w800,
+                  color: _C.white, fontSize: 26, fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Text(
               widget.data.title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700,
+                fontSize: 17, fontWeight: FontWeight.w700,
                 color: _hovered ? _C.maroon : const Color(0xFF2D2D2D),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               widget.data.subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: _C.greyLight),
+              style: const TextStyle(fontSize: 14, color: _C.greyLight),
             ),
           ],
         ),
@@ -597,12 +772,12 @@ class _FooterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 28),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 36),
       color: _C.black,
       child: const Text(
         '© 2026 Forge — Services Marketplace. All rights reserved.',
         textAlign: TextAlign.center,
-        style: TextStyle(color: Color(0xFF999999), fontSize: 13),
+        style: TextStyle(color: Color(0xFF999999), fontSize: 14),
       ),
     );
   }
