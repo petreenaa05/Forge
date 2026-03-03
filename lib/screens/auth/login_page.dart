@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:forge/providers/auth_provider.dart';
 
-/// Login page — Aadhaar-based authentication.
-/// Step 1: Enter 12-digit Aadhaar  →  Step 2: Verify OTP  →  Role Select
+/// Login page — Email and Password authentication.
+/// Enter email and password → Role Select
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -14,89 +13,62 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _aadhaarController = TextEditingController();
-  final _otpController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _otpSent = false; // toggles between aadhaar-entry and otp-verify steps
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _aadhaarController.dispose();
-    _otpController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  // ── Step 1: Send OTP to Aadhaar-linked phone ────────────────
-  Future<void> _handleSendOtp() async {
+  // ── Login with Email and Password ──────────────────────────
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    final authProvider = context.read<AuthProvider>();
-    await authProvider.sendOtp(_aadhaarController.text.trim());
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    if (!mounted) return;
+    // Simulate authentication
+    await Future.delayed(const Duration(seconds: 1));
 
-    if (authProvider.error != null) {
+    // For demo: accept any email with '@' and password length >= 6
+    if (email.contains('@') && password.length >= 6) {
+      // Simple UID generation for demo purposes
+      final uid = 'user_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Set user in AuthProvider
+      if (!mounted) return;
+      final authProvider = context.read<AuthProvider>();
+      authProvider.setLoginUser(uid: uid, email: email);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: Color(0xFF6D9E51),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Navigate to role selection
+      Navigator.of(context).pushReplacementNamed('/role-select');
+    } else {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error!),
+          content: const Text('Invalid email or password'),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      authProvider.clearError();
       setState(() => _isLoading = false);
-      return;
     }
-
-    setState(() {
-      _otpSent = true;
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('OTP sent to your Aadhaar-linked mobile number'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  // ── Step 2: Verify OTP ──────────────────────────────────────
-  Future<void> _handleVerifyOtp() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.verifyOtp(_otpController.text.trim());
-
-    if (!mounted) return;
-
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.error ?? 'Invalid OTP. Please try again.'),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      authProvider.clearError();
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    // Navigate to role selection
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/role-select');
-  }
-
-  void _goBackToAadhaar() {
-    setState(() {
-      _otpSent = false;
-      _otpController.clear();
-    });
   }
 
   @override
@@ -124,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Secure Access with Aadhaar Verification',
+                      'Sign in to your account',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -153,22 +125,17 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            _otpSent ? 'Verify OTP' : 'Login with Aadhaar',
+                          const Text(
+                            'Login',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF2D2D2D),
                             ),
                           ),
                           const SizedBox(height: 24),
-                          Form(
-                            key: _formKey,
-                            child: _otpSent
-                                ? _buildOtpStep()
-                                : _buildAadhaarStep(),
-                          ),
+                          Form(key: _formKey, child: _buildLoginForm()),
                         ],
                       ),
                     ),
@@ -210,12 +177,12 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // ── Aadhaar input step ────────────────────────────────────
-  Widget _buildAadhaarStep() {
+  // ── Login form with Email and Password ────────────────────
+  Widget _buildLoginForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Aadhaar icon
+        // User icon
         Center(
           child: Container(
             width: 72,
@@ -225,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.badge_rounded,
+              Icons.person_rounded,
               size: 36,
               color: Color(0xFFA82323),
             ),
@@ -233,53 +200,80 @@ class _LoginPageState extends State<LoginPage> {
         ),
         const SizedBox(height: 24),
 
-        // Aadhaar field
+        // Email field
         TextFormField(
-          controller: _aadhaarController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(12),
-          ],
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 2,
-          ),
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
-            labelText: 'Aadhaar Number',
-            hintText: 'Enter 12-digit Aadhaar number',
-            prefixIcon: const Icon(Icons.badge_rounded),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            labelText: 'Email Address',
+            hintText: 'Enter your email',
+            prefixIcon: const Icon(Icons.email_rounded),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFA82323),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFFA82323), width: 2),
             ),
           ),
           validator: (value) {
             if (value?.isEmpty ?? true) {
-              return 'Aadhaar number is required';
+              return 'Email is required';
             }
-            if (value!.length != 12) {
-              return 'Aadhaar number must be exactly 12 digits';
+            if (!value!.contains('@')) {
+              return 'Please enter a valid email address';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+
+        // Password field
+        TextFormField(
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            labelText: 'Password',
+            hintText: 'Enter your password',
+            prefixIcon: const Icon(Icons.lock_rounded),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: const Color(0xFF888888),
+              ),
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFA82323), width: 2),
+            ),
+          ),
+          validator: (value) {
+            if (value?.isEmpty ?? true) {
+              return 'Password is required';
+            }
+            if (value!.length < 6) {
+              return 'Password must be at least 6 characters';
             }
             return null;
           },
         ),
         const SizedBox(height: 24),
 
-        // Send OTP button
+        // Login button
         ElevatedButton(
-          onPressed: _isLoading ? null : _handleSendOtp,
+          onPressed: _isLoading ? null : _handleLogin,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFA82323),
             foregroundColor: Colors.white,
@@ -287,8 +281,9 @@ class _LoginPageState extends State<LoginPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            disabledBackgroundColor:
-                const Color(0xFFA82323).withValues(alpha: 0.5),
+            disabledBackgroundColor: const Color(
+              0xFFA82323,
+            ).withValues(alpha: 0.5),
           ),
           child: _isLoading
               ? const SizedBox(
@@ -300,7 +295,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 )
               : const Text(
-                  'Send OTP',
+                  'Sign In',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -324,7 +319,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Your Aadhaar is encrypted and used only for verification.',
+                  'Your credentials are encrypted and stored securely.',
                   style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF888888),
@@ -334,172 +329,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  // ── OTP verification step ─────────────────────────────────
-  Widget _buildOtpStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Lock icon
-        Center(
-          child: Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: const Color(0xFF6D9E51).withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.sms_rounded,
-              size: 36,
-              color: Color(0xFF6D9E51),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Subtitle
-        Text(
-          'OTP sent to Aadhaar-linked mobile',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        // Demo hint
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEF3C7),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Text(
-            '🧪 Demo mode: enter any 6 digits',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFFD97706),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // OTP field
-        TextFormField(
-          controller: _otpController,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          textAlign: TextAlign.center,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 10,
-          ),
-          decoration: InputDecoration(
-            hintText: '------',
-            hintStyle: TextStyle(
-              fontSize: 24,
-              color: Colors.grey.withValues(alpha: 0.4),
-              letterSpacing: 10,
-            ),
-            counterText: '',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFA82323),
-                width: 2,
-              ),
-            ),
-          ),
-          validator: (value) {
-            if (value?.isEmpty ?? true) {
-              return 'Please enter the OTP';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // Verify button
-        ElevatedButton(
-          onPressed: _isLoading ? null : _handleVerifyOtp,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFA82323),
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            disabledBackgroundColor:
-                const Color(0xFFA82323).withValues(alpha: 0.5),
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : const Text(
-                  'Verify & Login',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-        ),
-        const SizedBox(height: 16),
-
-        // Back + Resend row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton.icon(
-              onPressed: _goBackToAadhaar,
-              icon: const Icon(Icons.arrow_back, size: 16),
-              label: const Text('Change Aadhaar'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF666666),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('OTP resent successfully'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFA82323),
-              ),
-              child: const Text(
-                'Resend OTP',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
         ),
       ],
     );

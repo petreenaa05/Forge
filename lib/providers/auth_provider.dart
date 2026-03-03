@@ -74,4 +74,11 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  /// Set user after email/password login
+  void setLoginUser({required String uid, String? email}) {
+    _uid = uid;
+    _phone = email; // Using phone field for email in this case
+    notifyListeners();
+  }
 }

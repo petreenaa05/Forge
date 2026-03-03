@@ -8,6 +8,7 @@ import 'package:forge/providers/job_provider.dart';
 import 'package:forge/providers/chat_provider.dart';
 import 'package:forge/services/firestore_service.dart';
 import 'package:forge/core/constants/app_constants.dart';
+import 'package:forge/screens/chat/support_chat_page.dart';
 import 'package:intl/intl.dart';
 
 // =============================================================================
@@ -16,22 +17,22 @@ import 'package:intl/intl.dart';
 // =============================================================================
 
 class _C {
-  static const Color maroon      = Color(0xFFA82323);
-  static const Color maroonDark  = Color(0xFF7A1818); // pressed
+  static const Color maroon = Color(0xFFA82323);
+  static const Color maroonDark = Color(0xFF7A1818); // pressed
   static const Color maroonLight = Color(0xFFFDF2F2); // subtle bg
-  static const Color white       = Color(0xFFFFFFFF);
-  static const Color black       = Color(0xFF000000);
-  static const Color black80     = Color(0xCC000000); // 80% — titles
-  static const Color black60     = Color(0x99000000); // 60% — body text
-  static const Color black50     = Color(0x80000000); // 50% — subtext
-  static const Color black30     = Color(0x4D000000); // 30% — hint text
-  static const Color black10     = Color(0x1A000000); // 10% — dividers
-  static const Color border      = Color(0xFFE8E8E8); // neutral border
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
+  static const Color black80 = Color(0xCC000000); // 80% — titles
+  static const Color black60 = Color(0x99000000); // 60% — body text
+  static const Color black50 = Color(0x80000000); // 50% — subtext
+  static const Color black30 = Color(0x4D000000); // 30% — hint text
+  static const Color black10 = Color(0x1A000000); // 10% — dividers
+  static const Color border = Color(0xFFE8E8E8); // neutral border
   static const Color borderLight = Color(0xFFF2F2F2); // subtle border
   // Accent colors
-  static const Color green       = Color(0xFF2E7D32); // verified tick
-  static const Color yellow      = Color(0xFFFFC107); // rating star
-  static const Color yellowDark  = Color(0xFFFFB300); // star fill
+  static const Color green = Color(0xFF2E7D32); // verified tick
+  static const Color yellow = Color(0xFFFFC107); // rating star
+  static const Color yellowDark = Color(0xFFFFB300); // star fill
 }
 
 // =============================================================================
@@ -88,7 +89,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         });
       }
     }
-    
+
     // Notifications — populated from real data
     _notifications = [];
   }
@@ -119,17 +120,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   void _openCategory(String category) {
-    Navigator.of(context).pushNamed(
-      '/provider-detail',
-      arguments: {'category': category},
-    );
+    Navigator.of(
+      context,
+    ).pushNamed('/provider-detail', arguments: {'category': category});
   }
 
   void _openProfile(UserModel freelancer) {
-    Navigator.of(context).pushNamed(
-      '/provider-detail',
-      arguments: {'providerId': freelancer.uid},
-    );
+    Navigator.of(
+      context,
+    ).pushNamed('/provider-detail', arguments: {'providerId': freelancer.uid});
   }
 
   void _showCategorySelector() {
@@ -138,16 +137,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       final s = skill.toLowerCase();
       if (s.contains('electric')) return Icons.electrical_services_rounded;
       if (s.contains('plumb')) return Icons.plumbing_rounded;
-      if (s.contains('ac') || s.contains('repair')) return Icons.ac_unit_rounded;
-      if (s.contains('carpenter') || s.contains('civil')) return Icons.carpenter_rounded;
-      if (s.contains('car') || s.contains('mechanic')) return Icons.directions_car_rounded;
+      if (s.contains('ac') || s.contains('repair'))
+        return Icons.ac_unit_rounded;
+      if (s.contains('carpenter') || s.contains('civil'))
+        return Icons.carpenter_rounded;
+      if (s.contains('car') || s.contains('mechanic'))
+        return Icons.directions_car_rounded;
       if (s.contains('bike')) return Icons.two_wheeler_rounded;
-      if (s.contains('gym') || s.contains('trainer')) return Icons.fitness_center_rounded;
-      if (s.contains('automation') || s.contains('home')) return Icons.home_rounded;
-      if (s.contains('body') || s.contains('auto')) return Icons.build_circle_rounded;
+      if (s.contains('gym') || s.contains('trainer'))
+        return Icons.fitness_center_rounded;
+      if (s.contains('automation') || s.contains('home'))
+        return Icons.home_rounded;
+      if (s.contains('body') || s.contains('auto'))
+        return Icons.build_circle_rounded;
       return Icons.handyman_rounded;
     }
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: _C.white,
@@ -235,124 +240,149 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     final firstName = user?.name.split(' ').first ?? 'there';
 
     // Categorize jobs
-    final ongoingJobs = clientJobs.where((j) => 
-      j.status == JobStatus.requested || j.status == JobStatus.confirmed).toList();
-    final completedJobs = clientJobs.where((j) => 
-      j.status == JobStatus.completed).toList();
-    final upcomingJobs = ongoingJobs.where((j) =>
-      j.scheduledDate.isAfter(DateTime.now())).toList()
-      ..sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
+    final ongoingJobs = clientJobs
+        .where(
+          (j) =>
+              j.status == JobStatus.requested ||
+              j.status == JobStatus.confirmed,
+        )
+        .toList();
+    final completedJobs = clientJobs
+        .where((j) => j.status == JobStatus.completed)
+        .toList();
+    final upcomingJobs =
+        ongoingJobs
+            .where((j) => j.scheduledDate.isAfter(DateTime.now()))
+            .toList()
+          ..sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
 
-    return Scaffold(
-      backgroundColor: _C.white,
-      appBar: _buildAppBar(user),
-      body: RefreshIndicator(
-        color: _C.maroon,
-        displacement: 60,
-        onRefresh: _loadData,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
-            // ── Greeting ──────────────────────────────────────────────
-            SliverToBoxAdapter(child: _GreetingHeader(firstName: firstName)),
-
-            // ── Smart Search Bar (skills appear ONLY here) ────────────
-            SliverToBoxAdapter(child: _SmartSearchBar(onCategoryTap: _openCategory)),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-            // ── Quick Actions Grid ────────────────────────────────────
-            const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'Quick Actions'),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
-              child: _QuickActionsGrid(
-                onBookService: () => _showCategorySelector(),
-                onViewBookings: () => _showMyJobs(context, clientJobs),
-                onSavedProfessionals: () {},
-                onSupport: () {},
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: _C.white,
+          appBar: _buildAppBar(user),
+          body: RefreshIndicator(
+            color: _C.maroon,
+            displacement: 60,
+            onRefresh: _loadData,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+              slivers: [
+                // ── Greeting ──────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: _GreetingHeader(firstName: firstName),
+                ),
 
-            // ── Divider ───────────────────────────────────────────────
-            const SliverToBoxAdapter(child: _ThinDivider()),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // ── Smart Search Bar (skills appear ONLY here) ────────────
+                SliverToBoxAdapter(
+                  child: _SmartSearchBar(onCategoryTap: _openCategory),
+                ),
 
-            // ── Ongoing Bookings ──────────────────────────────────────
-            const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'Ongoing Bookings'),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
-              child: ongoingJobs.isEmpty
-                  ? const _EmptyHint(message: 'No ongoing bookings')
-                  : _OngoingBookingsList(jobs: ongoingJobs),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // ── Divider ───────────────────────────────────────────────
-            const SliverToBoxAdapter(child: _ThinDivider()),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // ── Quick Actions Grid ────────────────────────────────────
+                const SliverToBoxAdapter(
+                  child: _SectionHeader(title: 'Quick Actions'),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: _QuickActionsGrid(
+                    onBookService: () => _showCategorySelector(),
+                    onViewBookings: () => _showMyJobs(context, clientJobs),
+                    onSavedProfessionals: () {},
+                    onSupport: () =>
+                        Navigator.of(context).pushNamed('/community'),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // ── Upcoming Appointments ─────────────────────────────────
-            const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'Upcoming Appointments'),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
-              child: upcomingJobs.isEmpty
-                  ? const _EmptyHint(message: 'No upcoming appointments')
-                  : _UpcomingAppointmentsList(jobs: upcomingJobs),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                // ── Divider ───────────────────────────────────────────────
+                const SliverToBoxAdapter(child: _ThinDivider()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ── Divider ───────────────────────────────────────────────
-            const SliverToBoxAdapter(child: _ThinDivider()),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // ── Ongoing Bookings ──────────────────────────────────────
+                const SliverToBoxAdapter(
+                  child: _SectionHeader(title: 'Ongoing Bookings'),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: ongoingJobs.isEmpty
+                      ? const _EmptyHint(message: 'No ongoing bookings')
+                      : _OngoingBookingsList(jobs: ongoingJobs),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // ── Recommended Professionals ─────────────────────────────
-            const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'Recommended Professionals'),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
-              child: _loadingTop
-                  ? const _ShimmerRow()
-                  : _topRated.isEmpty
+                // ── Divider ───────────────────────────────────────────────
+                const SliverToBoxAdapter(child: _ThinDivider()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── Upcoming Appointments ─────────────────────────────────
+                const SliverToBoxAdapter(
+                  child: _SectionHeader(title: 'Upcoming Appointments'),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: upcomingJobs.isEmpty
+                      ? const _EmptyHint(message: 'No upcoming appointments')
+                      : _UpcomingAppointmentsList(jobs: upcomingJobs),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+                // ── Divider ───────────────────────────────────────────────
+                const SliverToBoxAdapter(child: _ThinDivider()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── Recommended Professionals ─────────────────────────────
+                const SliverToBoxAdapter(
+                  child: _SectionHeader(title: 'Recommended Professionals'),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: _loadingTop
+                      ? const _ShimmerRow()
+                      : _topRated.isEmpty
                       ? const _EmptyHint(message: 'No professionals found yet')
-                      : _RecommendedProfessionalsList(professionals: _topRated, onTap: _openProfile),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                      : _RecommendedProfessionalsList(
+                          professionals: _topRated,
+                          onTap: _openProfile,
+                        ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // ── Divider ───────────────────────────────────────────────
-            const SliverToBoxAdapter(child: _ThinDivider()),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // ── Divider ───────────────────────────────────────────────
+                const SliverToBoxAdapter(child: _ThinDivider()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ── Recent Activity ───────────────────────────────────────
-            const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'Recent Activity'),
+                // ── Recent Activity ───────────────────────────────────────
+                const SliverToBoxAdapter(
+                  child: _SectionHeader(title: 'Recent Activity'),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(
+                  child: completedJobs.isEmpty
+                      ? const _EmptyHint(message: 'No recent activity')
+                      : _RecentActivityList(
+                          jobs: completedJobs.take(5).toList(),
+                          onReview: (job) => Navigator.of(context).pushNamed(
+                            '/rate-provider',
+                            arguments: {
+                              'jobId': job.id,
+                              'providerId': job.providerId,
+                            },
+                          ),
+                          onRebook: (job) => _openCategory(job.category),
+                        ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
-              child: completedJobs.isEmpty
-                  ? const _EmptyHint(message: 'No recent activity')
-                  : _RecentActivityList(
-                      jobs: completedJobs.take(5).toList(),
-                      onReview: (job) => Navigator.of(context).pushNamed(
-                        '/rate-provider',
-                        arguments: {'jobId': job.id, 'providerId': job.providerId},
-                      ),
-                      onRebook: (job) => _openCategory(job.category),
-                    ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
-          ],
+          ),
         ),
-      ),
+        // Floating Chatbot Button
+        FloatingChatbotButton(),
+      ],
     );
   }
 
@@ -397,7 +427,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    _notifications.length > 9 ? '9+' : '${_notifications.length}',
+                    _notifications.length > 9
+                        ? '9+'
+                        : '${_notifications.length}',
                     style: const TextStyle(
                       color: _C.black,
                       fontSize: 9,
@@ -412,7 +444,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline_rounded, color: _C.white),
+              icon: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: _C.white,
+              ),
               tooltip: 'Messages',
               onPressed: () => Navigator.of(context).pushNamed('/chat-list'),
             ),
@@ -455,13 +490,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   : null,
               child: user?.photoUrl == null
                   ? Text(
-                      user?.name.isNotEmpty == true 
-                          ? user!.name[0].toUpperCase() 
+                      user?.name.isNotEmpty == true
+                          ? user!.name[0].toUpperCase()
                           : 'U',
                       style: const TextStyle(
-                          color: _C.maroon,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold),
+                        color: _C.maroon,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     )
                   : null,
             ),
@@ -520,34 +556,40 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ),
               )
             else
-              ...(_notifications.map((n) => ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _C.maroon.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+              ...(_notifications.map(
+                (n) => ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _C.maroon.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.work_outline,
+                      color: _C.maroon,
+                      size: 20,
+                    ),
                   ),
-                  child: const Icon(Icons.work_outline, color: _C.maroon, size: 20),
-                ),
-                title: Text(
-                  n['title'] as String,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: _C.black,
+                  title: Text(
+                    n['title'] as String,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: _C.black,
+                    ),
                   ),
+                  subtitle: Text(
+                    _formatTimeAgo(n['time'] as DateTime),
+                    style: const TextStyle(fontSize: 12, color: _C.black50),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: _C.black30),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openCategory(n['skill'] as String);
+                  },
                 ),
-                subtitle: Text(
-                  _formatTimeAgo(n['time'] as DateTime),
-                  style: const TextStyle(fontSize: 12, color: _C.black50),
-                ),
-                trailing: const Icon(Icons.chevron_right, color: _C.black30),
-                onTap: () {
-                  Navigator.pop(context);
-                  _openCategory(n['skill'] as String);
-                },
-              ))),
+              )),
             const SizedBox(height: 16),
           ],
         ),
@@ -589,8 +631,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.swap_horiz_rounded, color: _C.maroon),
-              title: const Text('Switch to Freelancer',
-                  style: TextStyle(color: _C.black, fontWeight: FontWeight.w500)),
+              title: const Text(
+                'Switch to Freelancer',
+                style: TextStyle(color: _C.black, fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _switchToFreelancer();
@@ -598,8 +642,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: _C.maroon),
-              title: const Text('Sign Out',
-                  style: TextStyle(color: _C.black, fontWeight: FontWeight.w500)),
+              title: const Text(
+                'Sign Out',
+                style: TextStyle(color: _C.black, fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _signOut();
@@ -620,14 +666,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       isScrollControlled: true,
       backgroundColor: _C.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) {
         if (jobs.isEmpty) {
           return const SizedBox(
             height: 220,
             child: Center(
-              child: Text('No bookings yet',
-                  style: TextStyle(color: _C.black50, fontSize: 15)),
+              child: Text(
+                'No bookings yet',
+                style: TextStyle(color: _C.black50, fontSize: 15),
+              ),
             ),
           );
         }
@@ -647,29 +696,38 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   child: Text(
                     'My Bookings',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _C.black),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: _C.black,
+                    ),
                   ),
                 );
               }
               final job = jobs[i - 1];
               return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                title: Text(job.title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, color: _C.black)),
-                subtitle: Text('${job.category} • ${job.status}',
-                    style: const TextStyle(color: _C.black50)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+                title: Text(
+                  job.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: _C.black,
+                  ),
+                ),
+                subtitle: Text(
+                  '${job.category} • ${job.status}',
+                  style: const TextStyle(color: _C.black50),
+                ),
                 trailing: job.status == 'confirmed'
                     ? TextButton(
-                        style: TextButton.styleFrom(
-                            foregroundColor: _C.maroon),
+                        style: TextButton.styleFrom(foregroundColor: _C.maroon),
                         onPressed: () {
-                          context
-                              .read<JobProvider>()
-                              .updateJobStatus(job.id, JobStatus.completed);
+                          context.read<JobProvider>().updateJobStatus(
+                            job.id,
+                            JobStatus.completed,
+                          );
                           Navigator.pop(context);
                           Navigator.of(context).pushNamed(
                             '/rate-provider',
@@ -682,9 +740,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         child: const Text('Complete'),
                       )
                     : job.status == 'completed'
-                        ? const Icon(Icons.check_circle_rounded,
-                            color: _C.maroon)
-                        : null,
+                    ? const Icon(Icons.check_circle_rounded, color: _C.maroon)
+                    : null,
               );
             },
           ),
@@ -732,11 +789,14 @@ class _SectionHeaderState extends State<_SectionHeader>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600))
-      ..forward();
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
     _underline = Tween<double>(begin: 0, end: 28).animate(
       CurvedAnimation(
-          parent: _ctrl, curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
+        parent: _ctrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
     );
   }
 
@@ -814,8 +874,9 @@ class _GreetingHeaderState extends State<_GreetingHeader>
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     _underline = Tween<double>(begin: 0, end: 48).animate(
       CurvedAnimation(
-          parent: _ctrl,
-          curve: const Interval(0.4, 1.0, curve: Curves.easeOut)),
+        parent: _ctrl,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+      ),
     );
   }
 
@@ -841,18 +902,20 @@ class _GreetingHeaderState extends State<_GreetingHeader>
               Text(
                 'Hi, ${widget.firstName} 👋',
                 style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: _C.black,
-                    height: 1.2),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: _C.black,
+                  height: 1.2,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
                 'Book trusted women professionals near you',
                 style: TextStyle(
-                    fontSize: 14,
-                    color: _C.black50,
-                    fontWeight: FontWeight.w400),
+                  fontSize: 14,
+                  color: _C.black50,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
               const SizedBox(height: 12),
               AnimatedBuilder(
@@ -931,7 +994,9 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
     super.initState();
 
     _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
 
     _focus.addListener(() {
@@ -951,10 +1016,9 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
         _suggestions = q.isEmpty
             ? _kSkillSuggestions
             : _kSkillSuggestions
-                .where((s) => s.toLowerCase().contains(q))
-                .toList();
-        if (_selected != null &&
-            !_selected!.toLowerCase().contains(q)) {
+                  .where((s) => s.toLowerCase().contains(q))
+                  .toList();
+        if (_selected != null && !_selected!.toLowerCase().contains(q)) {
           _selected = null;
         }
       });
@@ -977,8 +1041,9 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
     } else {
       setState(() => _selected = skill);
       _ctrl.text = skill;
-      _ctrl.selection =
-          TextSelection.fromPosition(TextPosition(offset: skill.length));
+      _ctrl.selection = TextSelection.fromPosition(
+        TextPosition(offset: skill.length),
+      );
       _focus.unfocus();
       // Navigate to provider list for this category
       widget.onCategoryTap(skill);
@@ -1041,8 +1106,11 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
                   suffixIcon: _ctrl.text.isNotEmpty
                       ? IconButton(
                           tooltip: 'Clear',
-                          icon: const Icon(Icons.close_rounded,
-                              color: _C.black50, size: 20),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: _C.black50,
+                            size: 20,
+                          ),
                           onPressed: () {
                             _ctrl.clear();
                             setState(() => _selected = null);
@@ -1062,8 +1130,10 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
                     borderRadius: BorderRadius.circular(30),
                     borderSide: const BorderSide(color: _C.maroon, width: 1.5),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                 ),
               ),
             ),
@@ -1091,7 +1161,9 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
                             duration: const Duration(milliseconds: 200),
                             curve: Curves.easeOut,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 9),
+                              horizontal: 16,
+                              vertical: 9,
+                            ),
                             decoration: BoxDecoration(
                               color: sel ? _C.maroon : _C.white,
                               borderRadius: BorderRadius.circular(25),
@@ -1105,7 +1177,7 @@ class _SmartSearchBarState extends State<_SmartSearchBar>
                                         color: _C.maroon.withValues(alpha: 0.2),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
-                                      )
+                                      ),
                                     ]
                                   : [],
                             ),
@@ -1141,7 +1213,7 @@ class _QuickActionsGrid extends StatelessWidget {
   final VoidCallback onViewBookings;
   final VoidCallback onSavedProfessionals;
   final VoidCallback onSupport;
-  
+
   const _QuickActionsGrid({
     required this.onBookService,
     required this.onViewBookings,
@@ -1155,29 +1227,37 @@ class _QuickActionsGrid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Expanded(child: _QuickActionButton(
-            icon: Icons.add_circle_outline_rounded,
-            label: 'Book a Service',
-            onTap: onBookService,
-          )),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Book a Service',
+              onTap: onBookService,
+            ),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: _QuickActionButton(
-            icon: Icons.calendar_month_outlined,
-            label: 'View Bookings',
-            onTap: onViewBookings,
-          )),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.calendar_month_outlined,
+              label: 'View Bookings',
+              onTap: onViewBookings,
+            ),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: _QuickActionButton(
-            icon: Icons.favorite_outline_rounded,
-            label: 'Saved Pros',
-            onTap: onSavedProfessionals,
-          )),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.favorite_outline_rounded,
+              label: 'Saved Pros',
+              onTap: onSavedProfessionals,
+            ),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: _QuickActionButton(
-            icon: Icons.headset_mic_outlined,
-            label: 'Support',
-            onTap: onSupport,
-          )),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.headset_mic_outlined,
+              label: 'Support',
+              onTap: onSupport,
+            ),
+          ),
         ],
       ),
     );
@@ -1188,7 +1268,7 @@ class _QuickActionButton extends StatefulWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  
+
   const _QuickActionButton({
     required this.icon,
     required this.label,
@@ -1230,11 +1310,13 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
                 width: _hovered ? 1.5 : 1,
               ),
               boxShadow: _hovered
-                  ? [BoxShadow(
-                      color: _C.maroon.withValues(alpha: 0.1),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    )]
+                  ? [
+                      BoxShadow(
+                        color: _C.maroon.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
                   : [],
             ),
             child: Column(
@@ -1270,7 +1352,7 @@ class _CategoryTile extends StatefulWidget {
   final String skill;
   final IconData icon;
   final VoidCallback onTap;
-  
+
   const _CategoryTile({
     required this.skill,
     required this.icon,
@@ -1311,8 +1393,8 @@ class _CategoryTileState extends State<_CategoryTile> {
             ),
             boxShadow: [
               BoxShadow(
-                color: _hovered 
-                    ? _C.maroon.withValues(alpha: 0.1) 
+                color: _hovered
+                    ? _C.maroon.withValues(alpha: 0.1)
                     : _C.black.withValues(alpha: 0.04),
                 blurRadius: _hovered ? 10 : 6,
                 offset: Offset(0, _hovered ? 4 : 2),
@@ -1327,14 +1409,16 @@ class _CategoryTileState extends State<_CategoryTile> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _hovered 
-                      ? _C.maroon 
+                  color: _hovered
+                      ? _C.maroon
                       : _C.maroon.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(widget.icon, 
-                  color: _hovered ? _C.white : _C.maroon, 
-                  size: 22),
+                child: Icon(
+                  widget.icon,
+                  color: _hovered ? _C.white : _C.maroon,
+                  size: 22,
+                ),
               ),
               const SizedBox(height: 10),
               Padding(
@@ -1393,8 +1477,10 @@ class _OngoingBookingCardState extends State<_OngoingBookingCard> {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(widget.job.scheduledDate);
-    
+    final dateStr = DateFormat(
+      'MMM d, yyyy • h:mm a',
+    ).format(widget.job.scheduledDate);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -1410,16 +1496,20 @@ class _OngoingBookingCardState extends State<_OngoingBookingCard> {
             width: _hovered ? 1.5 : 1,
           ),
           boxShadow: _hovered
-              ? [BoxShadow(
-                  color: _C.maroon.withValues(alpha: 0.1),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                )]
-              : [BoxShadow(
-                  color: _C.black.withValues(alpha: 0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                )],
+              ? [
+                  BoxShadow(
+                    color: _C.maroon.withValues(alpha: 0.1),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: _C.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
@@ -1431,7 +1521,11 @@ class _OngoingBookingCardState extends State<_OngoingBookingCard> {
                 color: _C.maroon.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.work_outline_rounded, color: _C.maroon, size: 22),
+              child: const Icon(
+                Icons.work_outline_rounded,
+                color: _C.maroon,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1449,16 +1543,16 @@ class _OngoingBookingCardState extends State<_OngoingBookingCard> {
                   const SizedBox(height: 4),
                   Text(
                     widget.job.category,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: _C.black50,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: _C.black50),
                   ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.schedule_rounded, 
-                        size: 14, color: _C.black.withValues(alpha: 0.4)),
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 14,
+                        color: _C.black.withValues(alpha: 0.4),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         dateStr,
@@ -1487,7 +1581,10 @@ class _OngoingBookingCardState extends State<_OngoingBookingCard> {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: _C.maroon),
                       borderRadius: BorderRadius.circular(8),
@@ -1495,12 +1592,16 @@ class _OngoingBookingCardState extends State<_OngoingBookingCard> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.chat_bubble_outline_rounded, 
-                          size: 14, color: _C.maroon),
+                        Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 14,
+                          color: _C.maroon,
+                        ),
                         SizedBox(width: 4),
-                        Text('Message',
+                        Text(
+                          'Message',
                           style: TextStyle(
-                            fontSize: 12, 
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: _C.maroon,
                           ),
@@ -1527,7 +1628,7 @@ class _StatusBadge extends StatelessWidget {
     Color bgColor;
     Color textColor;
     String displayText;
-    
+
     switch (status.toLowerCase()) {
       case 'requested':
         bgColor = _C.yellow.withValues(alpha: 0.15);
@@ -1549,7 +1650,7 @@ class _StatusBadge extends StatelessWidget {
         textColor = _C.black60;
         displayText = status.toUpperCase();
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -1598,7 +1699,7 @@ class _UpcomingAppointmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateStr = DateFormat('EEE, MMM d').format(job.scheduledDate);
     final timeStr = DateFormat('h:mm a').format(job.scheduledDate);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -1610,7 +1711,11 @@ class _UpcomingAppointmentTile extends StatelessWidget {
               color: _C.maroon.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.calendar_today_rounded, color: _C.maroon, size: 20),
+            child: const Icon(
+              Icons.calendar_today_rounded,
+              color: _C.maroon,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1663,7 +1768,10 @@ class _UpcomingAppointmentTile extends StatelessWidget {
 class _RecommendedProfessionalsList extends StatelessWidget {
   final List<UserModel> professionals;
   final void Function(UserModel) onTap;
-  const _RecommendedProfessionalsList({required this.professionals, required this.onTap});
+  const _RecommendedProfessionalsList({
+    required this.professionals,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1689,10 +1797,12 @@ class _RecommendedProfessionalCard extends StatefulWidget {
   const _RecommendedProfessionalCard({required this.user, required this.onTap});
 
   @override
-  State<_RecommendedProfessionalCard> createState() => _RecommendedProfessionalCardState();
+  State<_RecommendedProfessionalCard> createState() =>
+      _RecommendedProfessionalCardState();
 }
 
-class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCard> {
+class _RecommendedProfessionalCardState
+    extends State<_RecommendedProfessionalCard> {
   bool _hovered = false;
   bool _btnPressed = false;
 
@@ -1716,16 +1826,20 @@ class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCa
               width: _hovered ? 1.5 : 1,
             ),
             boxShadow: _hovered
-                ? [BoxShadow(
-                    color: _C.maroon.withValues(alpha: 0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  )]
-                : [BoxShadow(
-                    color: _C.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )],
+                ? [
+                    BoxShadow(
+                      color: _C.maroon.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: _C.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1745,9 +1859,10 @@ class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCa
                                 ? widget.user.name[0].toUpperCase()
                                 : '?',
                             style: const TextStyle(
-                                color: _C.maroon,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold),
+                              color: _C.maroon,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           )
                         : null,
                   ),
@@ -1774,18 +1889,19 @@ class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCa
                 ],
               ),
               const SizedBox(height: 8),
-              
+
               // Name (bold black)
               Text(
                 widget.user.name.split(' ').first,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: _C.black),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _C.black,
+                ),
               ),
-              
+
               // Skill
               if (widget.user.skills.isNotEmpty)
                 Text(
@@ -1794,7 +1910,7 @@ class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCa
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 11, color: _C.black50),
                 ),
-              
+
               // Rating (YELLOW star)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1804,21 +1920,23 @@ class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCa
                   Text(
                     widget.user.rating.toStringAsFixed(1),
                     style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: _C.black),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _C.black,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '(${widget.user.totalRatings})',
                     style: TextStyle(
-                        fontSize: 11,
-                        color: _C.black.withValues(alpha: 0.4)),
+                      fontSize: 11,
+                      color: _C.black.withValues(alpha: 0.4),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              
+
               // Book Now button
               GestureDetector(
                 onTapDown: (_) => setState(() => _btnPressed = true),
@@ -1836,20 +1954,23 @@ class _RecommendedProfessionalCardState extends State<_RecommendedProfessionalCa
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: _btnPressed
                         ? []
-                        : [BoxShadow(
-                            color: _C.maroon.withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          )],
+                        : [
+                            BoxShadow(
+                              color: _C.maroon.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                   ),
                   alignment: Alignment.center,
                   child: const Text(
                     'Book Now',
                     style: TextStyle(
-                        color: _C.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3),
+                      color: _C.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ),
@@ -1912,7 +2033,7 @@ class _RecentActivityCardState extends State<_RecentActivityCard> {
   @override
   Widget build(BuildContext context) {
     final dateStr = DateFormat('MMM d, yyyy').format(widget.job.scheduledDate);
-    
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -1937,7 +2058,11 @@ class _RecentActivityCardState extends State<_RecentActivityCard> {
                   color: _C.maroon.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.check_circle_outline_rounded, color: _C.maroon, size: 24),
+                child: const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: _C.maroon,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1966,21 +2091,39 @@ class _RecentActivityCardState extends State<_RecentActivityCard> {
                     onPressed: widget.onReview,
                     style: TextButton.styleFrom(
                       foregroundColor: _C.maroon,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                     ),
-                    child: const Text('Review',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'Review',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   OutlinedButton(
                     onPressed: widget.onRebook,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _C.maroon,
                       side: const BorderSide(color: _C.maroon),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    child: const Text('Rebook',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'Rebook',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -2012,8 +2155,9 @@ class _ShimmerRowState extends State<_ShimmerRow>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200))
-      ..repeat();
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
   }
 

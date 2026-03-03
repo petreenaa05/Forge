@@ -9,15 +9,15 @@ import 'package:forge/providers/chat_provider.dart';
 // Design tokens — match Forge brand
 // =============================================================================
 class _C {
-  static const Color maroon     = Color(0xFFA82323);
+  static const Color maroon = Color(0xFFA82323);
   static const Color maroonDark = Color(0xFF7A1818);
-  static const Color white      = Color(0xFFFFFFFF);
-  static const Color black      = Color(0xFF000000);
-  static const Color black80    = Color(0xCC000000);
-  static const Color black50    = Color(0x80000000);
-  static const Color black30    = Color(0x4D000000);
-  static const Color border     = Color(0xFFE8E8E8);
-  static const Color green      = Color(0xFF2E7D32);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
+  static const Color black80 = Color(0xCC000000);
+  static const Color black50 = Color(0x80000000);
+  static const Color black30 = Color(0x4D000000);
+  static const Color border = Color(0xFFE8E8E8);
+  static const Color green = Color(0xFF2E7D32);
 }
 
 /// Lists all conversations the current user is a participant in.
@@ -40,27 +40,20 @@ class ChatListScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Forge',
+          'Conversations',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
+            fontSize: 20,
             color: _C.white,
-            letterSpacing: 0.8,
+            letterSpacing: 0.5,
           ),
         ),
+        centerTitle: false,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text(
-                'Messages',
-                style: TextStyle(
-                  color: _C.white.withValues(alpha: 0.8),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.more_vert_rounded, color: _C.white),
+            onPressed: () {},
+            tooltip: 'More options',
           ),
         ],
       ),
@@ -80,21 +73,39 @@ class ChatListScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.chat_bubble_outline_rounded,
-                      size: 64, color: _C.black.withValues(alpha: 0.12)),
-                  const SizedBox(height: 16),
+                  Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 72,
+                    color: _C.black.withValues(alpha: 0.1),
+                  ),
+                  const SizedBox(height: 20),
                   const Text(
                     'No conversations yet',
                     style: TextStyle(
                       color: _C.black80,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   const Text(
-                    'Chats appear when a job is accepted.',
-                    style: TextStyle(color: _C.black50, fontSize: 14),
+                    'Conversations appear when a job is accepted.\nStart applying to jobs to connect with clients!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _C.black50,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: const Text('Go Back'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _C.maroon,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -111,10 +122,11 @@ class ChatListScreen extends StatelessWidget {
             ),
             itemBuilder: (_, i) {
               final c = convos[i];
-              final otherUid =
-                  c.participants.firstWhere((p) => p != uid, orElse: () => '');
-              final otherName =
-                  c.participantNames[otherUid] ?? 'Unknown';
+              final otherUid = c.participants.firstWhere(
+                (p) => p != uid,
+                orElse: () => '',
+              );
+              final otherName = c.participantNames[otherUid] ?? 'Unknown';
               final hasUnread = c.unreadBy[uid] == true;
 
               return _ChatListTile(
@@ -180,27 +192,44 @@ class _ChatListTileState extends State<_ChatListTile> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           color: _hovered
-              ? _C.maroon.withValues(alpha: 0.04)
+              ? _C.maroon.withValues(alpha: 0.06)
               : widget.hasUnread
-                  ? _C.maroon.withValues(alpha: 0.02)
-                  : _C.white,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ? _C.maroon.withValues(alpha: 0.02)
+              : _C.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               // Avatar
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: _C.maroon,
-                child: Text(
-                  widget.otherName.isNotEmpty
-                      ? widget.otherName[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                    color: _C.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: _C.maroon,
+                    child: Text(
+                      widget.otherName.isNotEmpty
+                          ? widget.otherName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: _C.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
                   ),
-                ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _C.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _C.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 14),
               // Name + message
@@ -218,7 +247,7 @@ class _ChatListTileState extends State<_ChatListTile> {
                         color: _C.black,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       widget.lastMessage.isNotEmpty
                           ? widget.lastMessage
@@ -231,15 +260,17 @@ class _ChatListTileState extends State<_ChatListTile> {
                         fontWeight: widget.hasUnread
                             ? FontWeight.w500
                             : FontWeight.normal,
+                        height: 1.4,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               // Time + unread dot
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
                     _timeAgo(widget.updatedAt),
@@ -251,15 +282,25 @@ class _ChatListTileState extends State<_ChatListTile> {
                           : FontWeight.normal,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   if (widget.hasUnread)
-                    Container(
-                      width: 10, height: 10,
-                      decoration: const BoxDecoration(
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
                         color: _C.maroon,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: _C.maroon.withValues(alpha: 0.3),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
-                    ),
+                    )
+                  else
+                    const SizedBox(width: 10, height: 10),
                 ],
               ),
             ],
@@ -272,8 +313,9 @@ class _ChatListTileState extends State<_ChatListTile> {
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.month}/${dt.day}';
   }
 }

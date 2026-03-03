@@ -35,6 +35,9 @@ import 'screens/client/rate_provider_screen.dart';
 // Screens - Chat
 import 'screens/chat/chat_screen.dart';
 import 'screens/chat/chat_list_screen.dart';
+import 'screens/chat/chat_demo_screen.dart';
+import 'screens/chat/support_chat_page.dart';
+import 'screens/community/community_page.dart';
 
 /// App entry point.
 /// Initializes Firebase and sets up Provider state management.
@@ -42,9 +45,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const ForgeApp());
 }
@@ -103,6 +104,17 @@ class ForgeApp extends StatelessWidget {
           // Chat
           '/chat': (context) => const ChatScreen(),
           '/chat-list': (context) => const ChatListScreen(),
+          '/chat-demo': (context) => const ChatDemoScreen(),
+          '/support-chat': (context) => const SupportChatPage(),
+
+          // Community
+          '/community': (context) {
+            final uid = context.read<app_auth.AuthProvider>().uid;
+            if (uid == null || uid.isEmpty) {
+              return const LoginPage();
+            }
+            return const CommunityPage();
+          },
         },
       ),
     );

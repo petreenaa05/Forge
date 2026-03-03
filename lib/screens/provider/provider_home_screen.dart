@@ -7,25 +7,26 @@ import 'package:forge/providers/chat_provider.dart';
 import 'package:forge/models/job_model.dart';
 import 'package:forge/models/user_model.dart';
 import 'package:forge/core/constants/app_constants.dart';
+import 'package:forge/screens/chat/support_chat_page.dart';
 import 'package:intl/intl.dart';
 
 // =============================================================================
 // Design tokens — MAROON #A82323 + BLACK + WHITE  (matches client_home)
 // =============================================================================
 class _C {
-  static const Color maroon      = Color(0xFFA82323);
-  static const Color maroonDark  = Color(0xFF7A1818);
+  static const Color maroon = Color(0xFFA82323);
+  static const Color maroonDark = Color(0xFF7A1818);
   static const Color maroonLight = Color(0xFFFDF2F2);
-  static const Color white       = Color(0xFFFFFFFF);
-  static const Color black       = Color(0xFF000000);
-  static const Color black80     = Color(0xCC000000);
-  static const Color black60     = Color(0x99000000);
-  static const Color black50     = Color(0x80000000);
-  static const Color black30     = Color(0x4D000000);
-  static const Color black10     = Color(0x1A000000);
-  static const Color border      = Color(0xFFE8E8E8);
-  static const Color green       = Color(0xFF2E7D32);
-  static const Color yellow      = Color(0xFFFFC107);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
+  static const Color black80 = Color(0xCC000000);
+  static const Color black60 = Color(0x99000000);
+  static const Color black50 = Color(0x80000000);
+  static const Color black30 = Color(0x4D000000);
+  static const Color black10 = Color(0x1A000000);
+  static const Color border = Color(0xFFE8E8E8);
+  static const Color green = Color(0xFF2E7D32);
+  static const Color yellow = Color(0xFFFFC107);
 }
 
 class ProviderHomeScreen extends StatefulWidget {
@@ -91,7 +92,8 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
           children: [
             const SizedBox(height: 12),
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: _C.border,
                 borderRadius: BorderRadius.circular(2),
@@ -100,14 +102,21 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.swap_horiz_rounded, color: _C.maroon),
-              title: const Text('Switch to Client',
-                  style: TextStyle(color: _C.black, fontWeight: FontWeight.w500)),
-              onTap: () { Navigator.pop(context); _switchToClient(); },
+              title: const Text(
+                'Switch to Client',
+                style: TextStyle(color: _C.black, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _switchToClient();
+              },
             ),
             ListTile(
               leading: const Icon(Icons.edit_rounded, color: _C.maroon),
-              title: const Text('Edit Profile',
-                  style: TextStyle(color: _C.black, fontWeight: FontWeight.w500)),
+              title: const Text(
+                'Edit Profile',
+                style: TextStyle(color: _C.black, fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).pushNamed('/provider-setup');
@@ -115,9 +124,14 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: _C.maroon),
-              title: const Text('Sign Out',
-                  style: TextStyle(color: _C.black, fontWeight: FontWeight.w500)),
-              onTap: () { Navigator.pop(context); _signOut(); },
+              title: const Text(
+                'Sign Out',
+                style: TextStyle(color: _C.black, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _signOut();
+              },
             ),
             const SizedBox(height: 16),
           ],
@@ -141,112 +155,129 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 
     final firstName = user?.name.split(' ').first ?? 'there';
 
-    return Scaffold(
-      backgroundColor: _C.white,
-      appBar: _buildAppBar(user, chatProvider),
-      body: RefreshIndicator(
-        color: _C.maroon,
-        displacement: 60,
-        onRefresh: _loadData,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: _C.white,
+          appBar: _buildAppBar(user, chatProvider),
+          body: RefreshIndicator(
+            color: _C.maroon,
+            displacement: 60,
+            onRefresh: _loadData,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                // ── Greeting ──────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: _GreetingHeader(firstName: firstName),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                // ── Profile Summary Card ──────────────────────────
+                if (user != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _ProfileCard(
+                        user: user,
+                        userProvider: userProvider,
+                      ),
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                // ── Stats Row ─────────────────────────────────────
+                if (user != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _StatsRow(user: user),
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+                // ── Divider ───────────────────────────────────────
+                const SliverToBoxAdapter(child: _ThinDivider()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── Section Title ─────────────────────────────────
+                const SliverToBoxAdapter(
+                  child: _SectionHeader(title: 'My Jobs'),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                // ── Segmented Tab Buttons ─────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          _TabButton(
+                            title: 'Incoming',
+                            count: jobProvider.incomingJobs.length,
+                            isSelected: selectedTab == 0,
+                            onTap: () => setState(() => selectedTab = 0),
+                          ),
+                          _TabButton(
+                            title: 'Active',
+                            count: jobProvider.activeJobs.length,
+                            isSelected: selectedTab == 1,
+                            onTap: () => setState(() => selectedTab = 1),
+                          ),
+                          _TabButton(
+                            title: 'Completed',
+                            count: jobProvider.completedJobs.length,
+                            isSelected: selectedTab == 2,
+                            onTap: () => setState(() => selectedTab = 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                // ── Job List ──────────────────────────────────────
+                if (tabs[selectedTab].isEmpty)
+                  const SliverToBoxAdapter(
+                    child: _EmptyHint(message: 'No jobs in this category'),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 6,
+                        ),
+                        child: _JobCard(
+                          job: tabs[selectedTab][i],
+                          provider: jobProvider,
+                        ),
+                      ),
+                      childCount: tabs[selectedTab].length,
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
           ),
-          slivers: [
-            // ── Greeting ──────────────────────────────────────
-            SliverToBoxAdapter(child: _GreetingHeader(firstName: firstName)),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-            // ── Profile Summary Card ──────────────────────────
-            if (user != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _ProfileCard(user: user, userProvider: userProvider),
-                ),
-              ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-            // ── Stats Row ─────────────────────────────────────
-            if (user != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _StatsRow(user: user),
-                ),
-              ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-            // ── Divider ───────────────────────────────────────
-            const SliverToBoxAdapter(child: _ThinDivider()),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // ── Section Title ─────────────────────────────────
-            const SliverToBoxAdapter(
-              child: _SectionHeader(title: 'My Jobs'),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // ── Segmented Tab Buttons ─────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      _TabButton(
-                        title: 'Incoming',
-                        count: jobProvider.incomingJobs.length,
-                        isSelected: selectedTab == 0,
-                        onTap: () => setState(() => selectedTab = 0),
-                      ),
-                      _TabButton(
-                        title: 'Active',
-                        count: jobProvider.activeJobs.length,
-                        isSelected: selectedTab == 1,
-                        onTap: () => setState(() => selectedTab = 1),
-                      ),
-                      _TabButton(
-                        title: 'Completed',
-                        count: jobProvider.completedJobs.length,
-                        isSelected: selectedTab == 2,
-                        onTap: () => setState(() => selectedTab = 2),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // ── Job List ──────────────────────────────────────
-            if (tabs[selectedTab].isEmpty)
-              const SliverToBoxAdapter(
-                child: _EmptyHint(message: 'No jobs in this category'),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    child: _JobCard(job: tabs[selectedTab][i], provider: jobProvider),
-                  ),
-                  childCount: tabs[selectedTab].length,
-                ),
-              ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
-          ],
         ),
-      ),
+        // Floating Chatbot Button
+        FloatingChatbotButton(),
+      ],
     );
   }
 
@@ -270,27 +301,42 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
         ),
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.groups_2_outlined, color: _C.white),
+          tooltip: 'Forge Network',
+          onPressed: () => Navigator.of(context).pushNamed('/community'),
+        ),
         // Chat icon with unread badge
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline_rounded, color: _C.white),
+              icon: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: _C.white,
+              ),
               tooltip: 'Messages',
               onPressed: () => Navigator.of(context).pushNamed('/chat-list'),
             ),
             if (chatProvider.hasUnread)
               Positioned(
-                right: 8, top: 8,
+                right: 8,
+                top: 8,
                 child: Container(
-                  width: 16, height: 16,
+                  width: 16,
+                  height: 16,
                   decoration: const BoxDecoration(
-                    color: _C.yellow, shape: BoxShape.circle,
+                    color: _C.yellow,
+                    shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    chatProvider.unreadCount > 9 ? '9+' : '${chatProvider.unreadCount}',
+                    chatProvider.unreadCount > 9
+                        ? '9+'
+                        : '${chatProvider.unreadCount}',
                     style: const TextStyle(
-                      color: _C.black, fontSize: 9, fontWeight: FontWeight.bold,
+                      color: _C.black,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -314,9 +360,10 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                           ? user!.name[0].toUpperCase()
                           : 'U',
                       style: const TextStyle(
-                          color: _C.maroon,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold),
+                        color: _C.maroon,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     )
                   : null,
             ),
@@ -366,15 +413,22 @@ class _SectionHeaderState extends State<_SectionHeader>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600))
-      ..forward();
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
     _underline = Tween<double>(begin: 0, end: 28).animate(
-      CurvedAnimation(parent: _ctrl, curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
     );
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -386,7 +440,9 @@ class _SectionHeaderState extends State<_SectionHeader>
           Text(
             widget.title,
             style: const TextStyle(
-              fontSize: 20, fontWeight: FontWeight.w800, color: _C.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: _C.black,
               letterSpacing: 0.2,
             ),
           ),
@@ -394,9 +450,11 @@ class _SectionHeaderState extends State<_SectionHeader>
           AnimatedBuilder(
             animation: _underline,
             builder: (_, __) => Container(
-              width: _underline.value, height: 2,
+              width: _underline.value,
+              height: 2,
               decoration: BoxDecoration(
-                color: _C.maroon, borderRadius: BorderRadius.circular(1),
+                color: _C.maroon,
+                borderRadius: BorderRadius.circular(1),
               ),
             ),
           ),
@@ -429,19 +487,28 @@ class _GreetingHeaderState extends State<_GreetingHeader>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 800),
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
     )..forward();
 
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.35), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.35),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     _underline = Tween<double>(begin: 0, end: 48).animate(
-      CurvedAnimation(parent: _ctrl, curve: const Interval(0.4, 1.0, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeOut),
+      ),
     );
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -459,20 +526,30 @@ class _GreetingHeaderState extends State<_GreetingHeader>
               Text(
                 'Hi, ${widget.firstName} 👋',
                 style: const TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.w800, color: _C.black, height: 1.2),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: _C.black,
+                  height: 1.2,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
                 'Manage your jobs and grow your business',
-                style: TextStyle(fontSize: 14, color: _C.black50, fontWeight: FontWeight.w400),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _C.black50,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
               const SizedBox(height: 12),
               AnimatedBuilder(
                 animation: _underline,
                 builder: (_, __) => Container(
-                  width: _underline.value, height: 2.5,
+                  width: _underline.value,
+                  height: 2.5,
                   decoration: BoxDecoration(
-                    color: _C.maroon, borderRadius: BorderRadius.circular(2),
+                    color: _C.maroon,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
@@ -519,8 +596,20 @@ class _ProfileCardState extends State<_ProfileCard> {
             width: _hovered ? 1.5 : 1,
           ),
           boxShadow: _hovered
-              ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.1), blurRadius: 14, offset: const Offset(0, 4))]
-              : [BoxShadow(color: _C.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+              ? [
+                  BoxShadow(
+                    color: _C.maroon.withValues(alpha: 0.1),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: _C.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,11 +619,19 @@ class _ProfileCardState extends State<_ProfileCard> {
                 CircleAvatar(
                   radius: 32,
                   backgroundColor: _C.maroon.withValues(alpha: 0.08),
-                  backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+                  backgroundImage: user.photoUrl != null
+                      ? NetworkImage(user.photoUrl!)
+                      : null,
                   child: user.photoUrl == null
                       ? Text(
-                          user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                          style: const TextStyle(color: _C.maroon, fontSize: 22, fontWeight: FontWeight.bold),
+                          user.name.isNotEmpty
+                              ? user.name[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: _C.maroon,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         )
                       : null,
                 ),
@@ -546,29 +643,49 @@ class _ProfileCardState extends State<_ProfileCard> {
                       Row(
                         children: [
                           Flexible(
-                            child: Text(user.name,
-                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _C.black)),
+                            child: Text(
+                              user.name,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: _C.black,
+                              ),
+                            ),
                           ),
                           if (user.verified) ...[
                             const SizedBox(width: 6),
                             Container(
-                              width: 20, height: 20,
+                              width: 20,
+                              height: 20,
                               decoration: BoxDecoration(
-                                color: _C.green, shape: BoxShape.circle,
+                                color: _C.green,
+                                shape: BoxShape.circle,
                                 border: Border.all(color: _C.white, width: 2),
                               ),
-                              child: const Icon(Icons.check, size: 12, color: _C.white),
+                              child: const Icon(
+                                Icons.check,
+                                size: 12,
+                                color: _C.white,
+                              ),
                             ),
                           ],
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(user.skills.join(', '),
-                          style: const TextStyle(fontSize: 13, color: _C.black50),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        user.skills.join(', '),
+                        style: const TextStyle(fontSize: 13, color: _C.black50),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 2),
-                      Text('${user.experience} yrs • ${user.location}',
-                          style: TextStyle(fontSize: 12, color: _C.black.withValues(alpha: 0.4))),
+                      Text(
+                        '${user.experience} yrs • ${user.location}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _C.black.withValues(alpha: 0.4),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -576,9 +693,16 @@ class _ProfileCardState extends State<_ProfileCard> {
             ),
             if (user.bio.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(user.bio,
-                  style: const TextStyle(fontSize: 13, color: _C.black60, height: 1.4),
-                  maxLines: 2, overflow: TextOverflow.ellipsis),
+              Text(
+                user.bio,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _C.black60,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: 14),
             Row(
@@ -587,11 +711,22 @@ class _ProfileCardState extends State<_ProfileCard> {
                   children: [
                     const Icon(Icons.star_rounded, size: 18, color: _C.yellow),
                     const SizedBox(width: 4),
-                    Text(user.rating.toStringAsFixed(1),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _C.black)),
+                    Text(
+                      user.rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _C.black,
+                      ),
+                    ),
                     const SizedBox(width: 4),
-                    Text('(${user.totalRatings})',
-                        style: TextStyle(fontSize: 12, color: _C.black.withValues(alpha: 0.4))),
+                    Text(
+                      '(${user.totalRatings})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _C.black.withValues(alpha: 0.4),
+                      ),
+                    ),
                   ],
                 ),
                 const Spacer(),
@@ -599,16 +734,22 @@ class _ProfileCardState extends State<_ProfileCard> {
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: 8, height: 8,
+                      width: 8,
+                      height: 8,
                       decoration: BoxDecoration(
                         color: user.available ? _C.green : _C.black30,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(user.available ? 'Available' : 'Offline',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-                            color: user.available ? _C.green : _C.black50)),
+                    Text(
+                      user.available ? 'Available' : 'Offline',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: user.available ? _C.green : _C.black50,
+                      ),
+                    ),
                     const SizedBox(width: 4),
                     SizedBox(
                       height: 28,
@@ -616,7 +757,9 @@ class _ProfileCardState extends State<_ProfileCard> {
                         value: user.available,
                         activeColor: _C.maroon,
                         onChanged: (val) {
-                          widget.userProvider.updateUser(user.uid, {'available': val});
+                          widget.userProvider.updateUser(user.uid, {
+                            'available': val,
+                          });
                         },
                       ),
                     ),
@@ -643,11 +786,23 @@ class _StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _StatCard(label: 'Rating', value: user.rating.toStringAsFixed(1), icon: Icons.star_rounded),
+        _StatCard(
+          label: 'Rating',
+          value: user.rating.toStringAsFixed(1),
+          icon: Icons.star_rounded,
+        ),
         const SizedBox(width: 10),
-        _StatCard(label: 'Completed', value: user.completedJobs.toString(), icon: Icons.check_circle_outline),
+        _StatCard(
+          label: 'Completed',
+          value: user.completedJobs.toString(),
+          icon: Icons.check_circle_outline,
+        ),
         const SizedBox(width: 10),
-        _StatCard(label: 'Reviews', value: user.totalRatings.toString(), icon: Icons.rate_review_outlined),
+        _StatCard(
+          label: 'Reviews',
+          value: user.totalRatings.toString(),
+          icon: Icons.rate_review_outlined,
+        ),
       ],
     );
   }
@@ -657,7 +812,11 @@ class _StatCard extends StatefulWidget {
   final String label;
   final String value;
   final IconData icon;
-  const _StatCard({required this.label, required this.value, required this.icon});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   State<_StatCard> createState() => _StatCardState();
@@ -683,18 +842,38 @@ class _StatCardState extends State<_StatCard> {
               width: _hovered ? 1.5 : 1,
             ),
             boxShadow: _hovered
-                ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 3))]
-                : [BoxShadow(color: _C.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2))],
+                ? [
+                    BoxShadow(
+                      color: _C.maroon.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: _C.black.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Column(
             children: [
               Icon(widget.icon, color: _C.maroon, size: 20),
               const SizedBox(height: 6),
-              Text(widget.value,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _C.black)),
+              Text(
+                widget.value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _C.black,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(widget.label,
-                  style: const TextStyle(fontSize: 11, color: _C.black50)),
+              Text(
+                widget.label,
+                style: const TextStyle(fontSize: 11, color: _C.black50),
+              ),
             ],
           ),
         ),
@@ -742,8 +921,8 @@ class _TabButtonState extends State<_TabButton> {
               color: widget.isSelected
                   ? _C.maroon
                   : _hovered
-                      ? _C.maroon.withValues(alpha: 0.06)
-                      : Colors.transparent,
+                  ? _C.maroon.withValues(alpha: 0.06)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
@@ -751,8 +930,12 @@ class _TabButtonState extends State<_TabButton> {
                 Text(
                   widget.title,
                   style: TextStyle(
-                    color: widget.isSelected ? _C.white : (_hovered ? _C.maroon : _C.black60),
-                    fontWeight: widget.isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: widget.isSelected
+                        ? _C.white
+                        : (_hovered ? _C.maroon : _C.black60),
+                    fontWeight: widget.isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
                     fontSize: 13,
                   ),
                 ),
@@ -761,8 +944,11 @@ class _TabButtonState extends State<_TabButton> {
                   Text(
                     '${widget.count}',
                     style: TextStyle(
-                      color: widget.isSelected ? _C.white.withValues(alpha: 0.8) : _C.black30,
-                      fontSize: 11, fontWeight: FontWeight.w600,
+                      color: widget.isSelected
+                          ? _C.white.withValues(alpha: 0.8)
+                          : _C.black30,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -811,21 +997,37 @@ class _JobCardState extends State<_JobCard> {
             width: _hovered ? 1.5 : 1,
           ),
           boxShadow: _hovered
-              ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.1), blurRadius: 14, offset: const Offset(0, 4))]
-              : [BoxShadow(color: _C.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+              ? [
+                  BoxShadow(
+                    color: _C.maroon.withValues(alpha: 0.1),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: _C.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
             // Job icon
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: _hovered ? _C.maroon : _C.maroon.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(Icons.work_outline_rounded,
-                  color: _hovered ? _C.white : _C.maroon, size: 22),
+              child: Icon(
+                Icons.work_outline_rounded,
+                color: _hovered ? _C.white : _C.maroon,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             // Job info
@@ -833,18 +1035,35 @@ class _JobCardState extends State<_JobCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(job.title,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _C.black)),
+                  Text(
+                    job.title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: _C.black,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(job.clientName,
-                      style: const TextStyle(fontSize: 13, color: _C.black50)),
+                  Text(
+                    job.clientName,
+                    style: const TextStyle(fontSize: 13, color: _C.black50),
+                  ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded, size: 13, color: _C.black.withValues(alpha: 0.4)),
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 13,
+                        color: _C.black.withValues(alpha: 0.4),
+                      ),
                       const SizedBox(width: 4),
-                      Text(dateStr,
-                          style: TextStyle(fontSize: 12, color: _C.black.withValues(alpha: 0.5))),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _C.black.withValues(alpha: 0.5),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -876,18 +1095,22 @@ class _JobCardState extends State<_JobCard> {
               filled: true,
               onTap: () {
                 widget.provider.updateJobStatus(job.id, JobStatus.confirmed);
-                Navigator.of(context).pushNamed('/chat', arguments: {
-                  'jobId': job.id,
-                  'otherUid': job.clientId,
-                  'otherName': job.clientName,
-                });
+                Navigator.of(context).pushNamed(
+                  '/chat',
+                  arguments: {
+                    'jobId': job.id,
+                    'otherUid': job.clientId,
+                    'otherName': job.clientName,
+                  },
+                );
               },
             ),
             const SizedBox(width: 6),
             _ActionChip(
               label: 'Reject',
               filled: false,
-              onTap: () => widget.provider.updateJobStatus(job.id, JobStatus.rejected),
+              onTap: () =>
+                  widget.provider.updateJobStatus(job.id, JobStatus.rejected),
             ),
           ],
         );
@@ -899,17 +1122,21 @@ class _JobCardState extends State<_JobCard> {
               label: 'Message',
               filled: false,
               icon: Icons.chat_bubble_outline_rounded,
-              onTap: () => Navigator.of(context).pushNamed('/chat', arguments: {
-                'jobId': job.id,
-                'otherUid': job.clientId,
-                'otherName': job.clientName,
-              }),
+              onTap: () => Navigator.of(context).pushNamed(
+                '/chat',
+                arguments: {
+                  'jobId': job.id,
+                  'otherUid': job.clientId,
+                  'otherName': job.clientName,
+                },
+              ),
             ),
             const SizedBox(width: 6),
             _ActionChip(
               label: 'Complete',
               filled: true,
-              onTap: () => widget.provider.updateJobStatus(job.id, JobStatus.completed),
+              onTap: () =>
+                  widget.provider.updateJobStatus(job.id, JobStatus.completed),
             ),
           ],
         );
@@ -928,7 +1155,12 @@ class _ActionChip extends StatefulWidget {
   final bool filled;
   final IconData? icon;
   final VoidCallback onTap;
-  const _ActionChip({required this.label, required this.filled, this.icon, required this.onTap});
+  const _ActionChip({
+    required this.label,
+    required this.filled,
+    this.icon,
+    required this.onTap,
+  });
 
   @override
   State<_ActionChip> createState() => _ActionChipState();
@@ -941,7 +1173,10 @@ class _ActionChipState extends State<_ActionChip> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) { setState(() => _pressed = false); widget.onTap(); },
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
@@ -955,22 +1190,34 @@ class _ActionChipState extends State<_ActionChip> {
           boxShadow: _pressed
               ? []
               : widget.filled
-                  ? [BoxShadow(color: _C.maroon.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))]
-                  : [],
+              ? [
+                  BoxShadow(
+                    color: _C.maroon.withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.icon != null) ...[
-              Icon(widget.icon, size: 14,
-                  color: widget.filled ? _C.white : _C.maroon),
+              Icon(
+                widget.icon,
+                size: 14,
+                color: widget.filled ? _C.white : _C.maroon,
+              ),
               const SizedBox(width: 4),
             ],
-            Text(widget.label,
-                style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600,
-                  color: widget.filled ? _C.white : _C.maroon,
-                )),
+            Text(
+              widget.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: widget.filled ? _C.white : _C.maroon,
+              ),
+            ),
           ],
         ),
       ),
@@ -1020,11 +1267,15 @@ class _StatusBadge extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(displayText,
-          style: TextStyle(
-            fontSize: 10, fontWeight: FontWeight.w700,
-            color: textColor, letterSpacing: 0.5,
-          )),
+      child: Text(
+        displayText,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
@@ -1044,10 +1295,16 @@ class _EmptyHint extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.inbox_outlined, size: 48, color: _C.black.withValues(alpha: 0.15)),
+            Icon(
+              Icons.inbox_outlined,
+              size: 48,
+              color: _C.black.withValues(alpha: 0.15),
+            ),
             const SizedBox(height: 12),
-            Text(message,
-                style: const TextStyle(color: _C.black50, fontSize: 14)),
+            Text(
+              message,
+              style: const TextStyle(color: _C.black50, fontSize: 14),
+            ),
           ],
         ),
       ),
