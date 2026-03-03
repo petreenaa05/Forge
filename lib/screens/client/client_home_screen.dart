@@ -5,6 +5,7 @@ import 'package:forge/models/job_model.dart';
 import 'package:forge/providers/auth_provider.dart';
 import 'package:forge/providers/user_provider.dart';
 import 'package:forge/providers/job_provider.dart';
+import 'package:forge/providers/chat_provider.dart';
 import 'package:forge/services/firestore_service.dart';
 import 'package:forge/core/constants/app_constants.dart';
 import 'package:intl/intl.dart';
@@ -146,6 +147,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     if (uid != null) {
       context.read<UserProvider>().loadUser(uid);
       context.read<JobProvider>().listenToClientJobs(uid);
+      context.read<ChatProvider>().startListening(uid);
     }
 
     try {
@@ -489,11 +491,39 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               ),
           ],
         ),
-        // Messages icon
-        IconButton(
-          icon: const Icon(Icons.chat_bubble_outline_rounded, color: _C.white),
-          tooltip: 'Messages',
-          onPressed: () => Navigator.of(context).pushNamed('/chat-list'),
+        // Messages icon with unread badge
+        Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline_rounded, color: _C.white),
+              tooltip: 'Messages',
+              onPressed: () => Navigator.of(context).pushNamed('/chat-list'),
+            ),
+            if (context.watch<ChatProvider>().hasUnread)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: _C.green,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    context.watch<ChatProvider>().unreadCount > 9
+                        ? '9+'
+                        : '${context.watch<ChatProvider>().unreadCount}',
+                    style: const TextStyle(
+                      color: _C.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         // Profile avatar
         Padding(

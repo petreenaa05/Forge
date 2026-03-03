@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ── Forge palette ──────────────────────────────────────────────────────────
-  static const Color primary   = Color(0xFF7D938A); // sage green  — buttons, stars, accents
-  static const Color secondary = Color(0xFFADA0A6); // muted mauve — card backgrounds
-  static const Color tertiary  = Color(0xFFDED6D6); // rose linen  — page background, search bar
+  // ── Forge palette — Maroon brand─────────────────────────────────────────
+  static const Color primary      = Color(0xFFA82323); // maroon — brand primary
+  static const Color primaryDark  = Color(0xFF7A1818); // pressed state
+  static const Color primaryLight = Color(0xFFFDF2F2); // subtle tinted bg
+  static const Color secondary    = Color(0xFF1A1A1A); // dark secondary
+  static const Color tertiary     = Color(0xFFF7F7F7); // light neutral bg
 
   // Derived / legacy aliases kept for backward compat
-  static const Color primaryLight = Color(0xFF9DAFA8);
-  static const Color accent       = Color(0xFFADA0A6); // secondary reused as accent
-  static const Color background   = Color(0xFFECE8E8); // slightly lighter tertiary
+  static const Color accent       = Color(0xFFA82323); // maroon accent
+  static const Color background   = Color(0xFFF9F9F9); // page background
   static const Color surface      = Colors.white;
-  static const Color textDark     = Color(0xFF2C2C2C);
+  static const Color textDark     = Color(0xFF1A1A1A);
   static const Color textMedium   = Color(0xFF6B6B6B);
-  static const Color verified     = Color(0xFF4CAF79);
+  static const Color verified     = Color(0xFF2E7D32);
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -28,12 +29,12 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: background,
       appBarTheme: const AppBarTheme(
-        backgroundColor: surface,
-        foregroundColor: textDark,
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: textDark,
+          color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.w700,
         ),
@@ -71,7 +72,7 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: tertiary,
+        backgroundColor: primaryLight,
         labelStyle: const TextStyle(color: primary, fontSize: 13),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),

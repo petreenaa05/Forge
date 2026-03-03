@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart' as app_auth;
 import 'providers/user_provider.dart';
 import 'providers/job_provider.dart';
+import 'providers/chat_provider.dart';
 
 // Screens - Landing
 import 'screens/landing/landing_page.dart';
@@ -63,6 +64,9 @@ class ForgeApp extends StatelessWidget {
 
         // Job workflow provider
         ChangeNotifierProvider(create: (_) => JobProvider()),
+
+        // Chat notifications provider
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
         title: 'Forge',

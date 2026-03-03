@@ -4,7 +4,21 @@ import 'package:forge/models/message_model.dart';
 import 'package:forge/services/firestore_service.dart';
 import 'package:forge/providers/auth_provider.dart';
 import 'package:forge/providers/user_provider.dart';
-import 'package:forge/core/theme/app_theme.dart';
+import 'package:forge/providers/chat_provider.dart';
+
+// =============================================================================
+// Design tokens — match Forge brand
+// =============================================================================
+class _C {
+  static const Color maroon     = Color(0xFFA82323);
+  static const Color maroonDark = Color(0xFF7A1818);
+  static const Color white      = Color(0xFFFFFFFF);
+  static const Color black      = Color(0xFF000000);
+  static const Color black50    = Color(0x80000000);
+  static const Color black30    = Color(0x4D000000);
+  static const Color border     = Color(0xFFE8E8E8);
+  static const Color bg         = Color(0xFFF9F9F9);
+}
 
 /// Real-time chat screen between client and provider for a confirmed job.
 ///
@@ -54,6 +68,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     if (mounted) {
+      // Mark this conversation as read
+      context.read<ChatProvider>().markAsRead(chatId);
       setState(() {
         _chatId = chatId;
         _initializing = false;
@@ -101,27 +117,57 @@ class _ChatScreenState extends State<ChatScreen> {
     final uid = context.read<AuthProvider>().uid ?? '';
 
     return Scaffold(
+      backgroundColor: _C.bg,
       appBar: AppBar(
+        backgroundColor: _C.maroon,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: _C.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        titleSpacing: 0,
         title: Row(
           children: [
             CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primary,
+              radius: 18,
+              backgroundColor: _C.white,
               child: Text(
                 _otherName.isNotEmpty ? _otherName[0].toUpperCase() : '?',
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                    color: _C.maroon,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(width: 10),
-            Text(_otherName, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _otherName,
+                    style: const TextStyle(
+                      color: _C.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'Forge Chat',
+                    style: TextStyle(
+                      color: _C.white.withValues(alpha: 0.7),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
       body: _initializing || _chatId == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: _C.maroon))
           : Column(
               children: [
                 // ── Messages ──────────────────────────────
@@ -129,24 +175,39 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: StreamBuilder<List<MessageModel>>(
                     stream: _db.getMessages(_chatId!),
                     builder: (context, snap) {
+                      // Mark as read whenever new messages arrive
+                      if (snap.hasData && _chatId != null) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          context.read<ChatProvider>().markAsRead(_chatId!);
+                        });
+                      }
+
                       if (snap.connectionState == ConnectionState.waiting) {
                         return const Center(
-                            child: CircularProgressIndicator());
+                            child: CircularProgressIndicator(color: _C.maroon));
                       }
                       final messages = snap.data ?? [];
                       if (messages.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'No messages yet.\nSay hello! 👋',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.textMedium),
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.chat_bubble_outline_rounded,
+                                  size: 56, color: _C.black.withValues(alpha: 0.12)),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'No messages yet.\nSay hello! 👋',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: _C.black50, fontSize: 15),
+                              ),
+                            ],
                           ),
                         );
                       }
                       return ListView.builder(
                         controller: _scrollCtrl,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                            horizontal: 14, vertical: 10),
                         itemCount: messages.length,
                         itemBuilder: (_, i) {
                           final m = messages[i];
@@ -161,18 +222,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 // ── Input bar ─────────────────────────────
                 Container(
                   padding: EdgeInsets.only(
-                    left: 12,
-                    right: 8,
-                    top: 8,
-                    bottom: MediaQuery.of(context).padding.bottom + 8,
+                    left: 14,
+                    right: 10,
+                    top: 10,
+                    bottom: MediaQuery.of(context).padding.bottom + 10,
                   ),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: _C.white,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: Offset(0, -1)),
+                          color: _C.black.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, -2)),
                     ],
                   ),
                   child: Row(
@@ -183,26 +244,21 @@ class _ChatScreenState extends State<ChatScreen> {
                           textCapitalization: TextCapitalization.sentences,
                           decoration: InputDecoration(
                             hintText: 'Type a message…',
+                            hintStyle: const TextStyle(color: _C.black30, fontSize: 14),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
-                            fillColor: AppTheme.background,
+                            fillColor: _C.bg,
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
+                                horizontal: 18, vertical: 12),
                           ),
                           onSubmitted: (_) => _send(),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      CircleAvatar(
-                        backgroundColor: AppTheme.primary,
-                        child: IconButton(
-                          icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                          onPressed: _send,
-                        ),
-                      ),
+                      const SizedBox(width: 8),
+                      _SendButton(onTap: _send),
                     ],
                   ),
                 ),
@@ -212,9 +268,51 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Message bubble
-// ---------------------------------------------------------------------------
+// =============================================================================
+// _SendButton — animated press effect
+// =============================================================================
+
+class _SendButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _SendButton({required this.onTap});
+
+  @override
+  State<_SendButton> createState() => _SendButtonState();
+}
+
+class _SendButtonState extends State<_SendButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) { setState(() => _pressed = false); widget.onTap(); },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.9 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          width: 44, height: 44,
+          decoration: BoxDecoration(
+            color: _pressed ? _C.maroonDark : _C.maroon,
+            shape: BoxShape.circle,
+            boxShadow: _pressed
+                ? []
+                : [BoxShadow(color: _C.maroon.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
+          ),
+          child: const Icon(Icons.send_rounded, color: _C.white, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Message bubble — with entrance animation
+// =============================================================================
+
 class _MessageBubble extends StatelessWidget {
   final MessageModel message;
   final bool isMe;
@@ -231,15 +329,19 @@ class _MessageBubble extends StatelessWidget {
         constraints:
             BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
         decoration: BoxDecoration(
-          color: isMe ? AppTheme.primary : Colors.white,
+          color: isMe ? _C.maroon : _C.white,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isMe ? 18 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 18),
           ),
-          boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
+          boxShadow: [
+            BoxShadow(
+              color: _C.black.withValues(alpha: 0.06),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
           ],
         ),
         child: Column(
@@ -248,8 +350,9 @@ class _MessageBubble extends StatelessWidget {
             Text(
               message.text,
               style: TextStyle(
-                color: isMe ? Colors.white : AppTheme.textDark,
+                color: isMe ? _C.white : _C.black,
                 fontSize: 15,
+                height: 1.35,
               ),
             ),
             const SizedBox(height: 4),
@@ -257,7 +360,9 @@ class _MessageBubble extends StatelessWidget {
               '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}',
               style: TextStyle(
                 fontSize: 10,
-                color: isMe ? Colors.white60 : AppTheme.textMedium,
+                color: isMe
+                    ? _C.white.withValues(alpha: 0.6)
+                    : _C.black50,
               ),
             ),
           ],

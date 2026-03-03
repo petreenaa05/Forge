@@ -264,6 +264,17 @@ class FirestoreService {
       final messagesRef =
           chatRef.collection(AppCollections.messages);
 
+      // Read chat doc to find the other participant
+      final chatSnap = await chatRef.get();
+      final participants = List<String>.from(
+          (chatSnap.data() ?? {})['participants'] ?? []);
+
+      // Build unreadBy: mark everyone except the sender as unread
+      final Map<String, dynamic> unreadUpdates = {};
+      for (final p in participants) {
+        unreadUpdates['unreadBy.$p'] = p != message.senderId;
+      }
+
       // Use a batch so both writes succeed or fail together.
       final batch = _db.batch();
 
@@ -273,6 +284,7 @@ class FirestoreService {
       batch.update(chatRef, {
         'lastMessage': message.text,
         'updatedAt': Timestamp.fromDate(message.timestamp),
+        ...unreadUpdates,
       });
 
       await batch.commit();
@@ -302,5 +314,14 @@ class FirestoreService {
         .map((snapshot) => snapshot.docs
             .map((doc) => ConversationModel.fromMap(doc.data(), doc.id))
             .toList());
+  }
+
+  /// Mark a conversation as read for the given user.
+  Future<void> markConversationRead(String chatId, String userId) async {
+    try {
+      await _db.collection(AppCollections.chats).doc(chatId).update({
+        'unreadBy.$userId': false,
+      });
+    } catch (_) {}
   }
 }
