@@ -1,517 +1,279 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'package:shimmer/shimmer.dart';
-
-import 'package:forge/core/chat_theme.dart';
-import 'package:forge/models/chat_model.dart';
+import 'package:forge/models/message_model.dart';
+import 'package:forge/services/firestore_service.dart';
+import 'package:forge/providers/auth_provider.dart';
 import 'package:forge/providers/chat_provider.dart';
-import 'package:forge/providers/auth_provider.dart' as app_auth;
-import 'package:forge/services/chat_service.dart';
 
-/// Chat list with staggered entrance animations.
-class ChatListScreen extends StatefulWidget {
+// =============================================================================
+// Design tokens — match Forge brand
+// =============================================================================
+class _C {
+  static const Color maroon     = Color(0xFFA82323);
+  static const Color maroonDark = Color(0xFF7A1818);
+  static const Color white      = Color(0xFFFFFFFF);
+  static const Color black      = Color(0xFF000000);
+  static const Color black80    = Color(0xCC000000);
+  static const Color black50    = Color(0x80000000);
+  static const Color black30    = Color(0x4D000000);
+  static const Color border     = Color(0xFFE8E8E8);
+  static const Color green      = Color(0xFF2E7D32);
+}
+
+/// Lists all conversations the current user is a participant in.
+class ChatListScreen extends StatelessWidget {
   const ChatListScreen({super.key});
 
   @override
-  State<ChatListScreen> createState() => _ChatListScreenState();
-}
-
-class _ChatListScreenState extends State<ChatListScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _staggerCtrl;
-
-  String get _myUid =>
-      context.read<app_auth.AuthProvider>().uid ?? '';
-
-  @override
-  void initState() {
-    super.initState();
-    _staggerCtrl = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    )..forward();
-  }
-
-  @override
-  void dispose() {
-    _staggerCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final cp = Provider.of<ChatProvider>(context, listen: false);
+    final uid = context.read<AuthProvider>().uid ?? '';
+    final db = FirestoreService();
 
     return Scaffold(
-      backgroundColor: ChatTheme.background,
+      backgroundColor: _C.white,
       appBar: AppBar(
-        backgroundColor: ChatTheme.surface,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: _C.maroon,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: _C.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
-          'Messages',
+          'Forge',
           style: TextStyle(
-            color: ChatTheme.textPrimary,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            color: _C.white,
+            letterSpacing: 0.8,
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: ChatTheme.tertiary.withValues(alpha: 0.5)),
-        ),
         actions: [
-          StreamBuilder<int>(
-            stream: cp.totalUnread(_myUid),
-            builder: (context, snap) {
-              final count = snap.data ?? 0;
-              return AnimatedSwitcher(
-                duration: ChatTheme.normal,
-                transitionBuilder: (child, anim) =>
-                    ScaleTransition(scale: anim, child: child),
-                child: count > 0
-                    ? Container(
-                        key: ValueKey(count),
-                        margin: const EdgeInsets.only(right: 16),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: ChatTheme.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$count new',
-                          style: const TextStyle(
-                            color: ChatTheme.textOnPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(key: ValueKey('none')),
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Text(
+                'Messages',
+                style: TextStyle(
+                  color: _C.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: StreamBuilder<List<ChatModel>>(
-        stream: cp.userChats(_myUid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildSkeleton();
+      body: StreamBuilder<List<ConversationModel>>(
+        stream: db.getConversations(uid),
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: _C.maroon),
+            );
           }
 
-          if (snapshot.hasError) {
+          final convos = snap.data ?? [];
+
+          if (convos.isEmpty) {
             return Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.wifi_off_rounded,
-                      size: 48, color: ChatTheme.error),
-                  const SizedBox(height: 12),
-                  const Text('Couldn\'t load chats',
-                      style: TextStyle(color: ChatTheme.textSecondary)),
-                  TextButton(
-                    onPressed: () => setState(() {}),
-                    child: const Text('Retry',
-                        style: TextStyle(color: ChatTheme.primary)),
+                  Icon(Icons.chat_bubble_outline_rounded,
+                      size: 64, color: _C.black.withValues(alpha: 0.12)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No conversations yet',
+                    style: TextStyle(
+                      color: _C.black80,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Chats appear when a job is accepted.',
+                    style: TextStyle(color: _C.black50, fontSize: 14),
                   ),
                 ],
               ),
             );
           }
 
-          final chats = snapshot.data ?? [];
-
-          if (chats.isEmpty) return _buildEmpty();
-
-          _staggerCtrl.reset();
-          _staggerCtrl.forward();
-
-          return RefreshIndicator(
-            color: ChatTheme.primary,
-            backgroundColor: ChatTheme.surface,
-            onRefresh: () async =>
-                await Future.delayed(const Duration(milliseconds: 400)),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: chats.length,
-              separatorBuilder: (_, __) => Padding(
-                padding: const EdgeInsets.only(left: 82),
-                child: Divider(
-                  height: 1,
-                  color: ChatTheme.tertiary.withValues(alpha: 0.5),
-                ),
-              ),
-              itemBuilder: (context, index) {
-                final start = (index * 0.08).clamp(0.0, 0.7);
-                final end = (start + 0.3).clamp(0.0, 1.0);
-
-                final tileAnim = Tween<Offset>(
-                  begin: const Offset(0.15, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: _staggerCtrl,
-                  curve: Interval(start, end, curve: ChatTheme.curveSmooth),
-                ));
-
-                final fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-                  CurvedAnimation(
-                    parent: _staggerCtrl,
-                    curve: Interval(start, end, curve: Curves.easeOut),
-                  ),
-                );
-
-                return FadeTransition(
-                  opacity: fadeAnim,
-                  child: SlideTransition(
-                    position: tileAnim,
-                    child: _ChatTile(
-                      chat: chats[index],
-                      myUid: _myUid,
-                      onTap: () {
-                        Navigator.pushNamed(context, '/chat', arguments: {
-                          'otherUid': chats[index].getOtherUid(_myUid),
-                          'otherName': chats[index].getOtherName(_myUid),
-                          'otherImage': chats[index].getOtherImage(_myUid),
-                          'jobId': chats[index].jobId,
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: convos.length,
+            separatorBuilder: (_, __) => Container(
+              margin: const EdgeInsets.only(left: 76),
+              height: 1,
+              color: _C.border,
             ),
+            itemBuilder: (_, i) {
+              final c = convos[i];
+              final otherUid =
+                  c.participants.firstWhere((p) => p != uid, orElse: () => '');
+              final otherName =
+                  c.participantNames[otherUid] ?? 'Unknown';
+              final hasUnread = c.unreadBy[uid] == true;
+
+              return _ChatListTile(
+                otherName: otherName,
+                lastMessage: c.lastMessage,
+                updatedAt: c.updatedAt,
+                hasUnread: hasUnread,
+                onTap: () {
+                  // Mark as read
+                  context.read<ChatProvider>().markAsRead(c.id);
+                  Navigator.of(context).pushNamed(
+                    '/chat',
+                    arguments: {
+                      'jobId': c.jobId,
+                      'otherUid': otherUid,
+                      'otherName': otherName,
+                    },
+                  );
+                },
+              );
+            },
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSkeleton() {
-    return Shimmer.fromColors(
-      baseColor: ChatTheme.tertiaryLight,
-      highlightColor: ChatTheme.tertiarySurface,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: 7,
-        itemBuilder: (_, __) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              const CircleAvatar(radius: 28, backgroundColor: Colors.white),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 13,
-                      width: 110,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      height: 11,
-                      width: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: ChatTheme.entrance,
-        curve: ChatTheme.curveSmooth,
-        builder: (context, value, child) {
-          return Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, 20 * (1 - value)),
-              child: child,
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: ChatTheme.primarySurface,
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: const Icon(
-                  Icons.forum_outlined,
-                  size: 48,
-                  color: ChatTheme.primary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'No conversations yet',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: ChatTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'When you connect with someone,\nyour chats will appear here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: ChatTheme.textMuted,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 }
 
-class _ChatTile extends StatefulWidget {
-  final ChatModel chat;
-  final String myUid;
+// =============================================================================
+// _ChatListTile — individual conversation row with hover effect
+// =============================================================================
+
+class _ChatListTile extends StatefulWidget {
+  final String otherName;
+  final String lastMessage;
+  final DateTime updatedAt;
+  final bool hasUnread;
   final VoidCallback onTap;
 
-  const _ChatTile({
-    required this.chat,
-    required this.myUid,
+  const _ChatListTile({
+    required this.otherName,
+    required this.lastMessage,
+    required this.updatedAt,
+    required this.hasUnread,
     required this.onTap,
   });
 
   @override
-  State<_ChatTile> createState() => _ChatTileState();
+  State<_ChatListTile> createState() => _ChatListTileState();
 }
 
-class _ChatTileState extends State<_ChatTile> {
-  double _scale = 1.0;
+class _ChatListTileState extends State<_ChatListTile> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.chat.getOtherName(widget.myUid);
-    final image = widget.chat.getOtherImage(widget.myUid);
-    final otherUid = widget.chat.getOtherUid(widget.myUid);
-    final unread = widget.chat.getUnreadCount(widget.myUid);
-    final isTyping = widget.chat.isOtherTyping(widget.myUid);
-    final isMySend = widget.chat.lastSenderId == widget.myUid;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.97),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: ChatTheme.fast,
-        curve: ChatTheme.curveSmooth,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          color: _hovered
+              ? _C.maroon.withValues(alpha: 0.04)
+              : widget.hasUnread
+                  ? _C.maroon.withValues(alpha: 0.02)
+                  : _C.white,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(
             children: [
-              Stack(
-                children: [
-                  Hero(
-                    tag: 'avatar_$name',
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: ChatTheme.primarySurface,
-                      backgroundImage: image.isNotEmpty
-                          ? CachedNetworkImageProvider(image)
-                          : null,
-                      child: image.isEmpty
-                          ? Text(
-                              name.isNotEmpty ? name[0].toUpperCase() : '?',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: ChatTheme.primary,
-                              ),
-                            )
-                          : null,
-                    ),
+              // Avatar
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: _C.maroon,
+                child: Text(
+                  widget.otherName.isNotEmpty
+                      ? widget.otherName[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    color: _C.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
-                  StreamBuilder<UserPresence>(
-                    stream: ChatService().streamPresence(otherUid),
-                    builder: (context, snap) {
-                      final online = snap.data?.online ?? false;
-                      return Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: AnimatedScale(
-                          scale: online ? 1.0 : 0.0,
-                          duration: ChatTheme.normal,
-                          curve: ChatTheme.curveSpring,
-                          child: Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: ChatTheme.onlineDot,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: ChatTheme.surface,
-                                width: 2.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                ),
               ),
               const SizedBox(width: 14),
-
+              // Name + message
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: unread > 0
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: ChatTheme.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          timeago.format(widget.chat.updatedAt,
-                              locale: 'en_short'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: unread > 0
-                                ? ChatTheme.primary
-                                : ChatTheme.textMuted,
-                            fontWeight: unread > 0
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      widget.otherName,
+                      style: TextStyle(
+                        fontWeight: widget.hasUnread
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        fontSize: 15,
+                        color: _C.black,
+                      ),
                     ),
-                    const SizedBox(height: 5),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AnimatedSwitcher(
-                            duration: ChatTheme.fast,
-                            child: isTyping
-                                ? const Text(
-                                    'typing...',
-                                    key: ValueKey('typing'),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: ChatTheme.primary,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  )
-                                : Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        if (isMySend &&
-                                            widget.chat.lastMessage
-                                                .isNotEmpty)
-                                          const TextSpan(
-                                            text: 'You: ',
-                                            style: TextStyle(
-                                              color: ChatTheme.textMuted,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        TextSpan(
-                                          text: widget.chat
-                                                  .lastMessagePreview
-                                                  .isEmpty
-                                              ? 'Start chatting...'
-                                              : widget.chat
-                                                  .lastMessagePreview,
-                                        ),
-                                      ],
-                                    ),
-                                    key: ValueKey(
-                                        widget.chat.lastMessage),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: unread > 0
-                                          ? ChatTheme.textPrimary
-                                          : ChatTheme.textMuted,
-                                      fontWeight: unread > 0
-                                          ? FontWeight.w500
-                                          : FontWeight.normal,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                          ),
-                        ),
-
-                        if (unread > 0) ...[
-                          const SizedBox(width: 8),
-                          AnimatedScale(
-                            scale: 1.0,
-                            duration: ChatTheme.normal,
-                            curve: ChatTheme.curveSpring,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: ChatTheme.unreadBadge,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                unread > 99 ? '99+' : '$unread',
-                                style: const TextStyle(
-                                  color: ChatTheme.textOnPrimary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.lastMessage.isNotEmpty
+                          ? widget.lastMessage
+                          : 'No messages yet',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: widget.hasUnread ? _C.black80 : _C.black50,
+                        fontSize: 13,
+                        fontWeight: widget.hasUnread
+                            ? FontWeight.w500
+                            : FontWeight.normal,
+                      ),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              // Time + unread dot
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _timeAgo(widget.updatedAt),
+                    style: TextStyle(
+                      color: widget.hasUnread ? _C.maroon : _C.black50,
+                      fontSize: 12,
+                      fontWeight: widget.hasUnread
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  if (widget.hasUnread)
+                    Container(
+                      width: 10, height: 10,
+                      decoration: const BoxDecoration(
+                        color: _C.maroon,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
   }
 }

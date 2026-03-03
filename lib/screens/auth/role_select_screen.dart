@@ -5,11 +5,9 @@ import 'package:forge/providers/auth_provider.dart';
 import 'package:forge/providers/user_provider.dart';
 import 'package:forge/core/theme/app_theme.dart';
 import 'package:forge/core/constants/app_constants.dart';
-import 'package:forge/widgets/auth/role_card.dart';
 
-/// Professional role selection screen.
+/// First-time role selection screen.
 /// User chooses "I Offer Services" (Freelancer) or "I Need Services" (Client).
-/// Features selection state, hover effects, and responsive layout.
 class RoleSelectScreen extends StatefulWidget {
   const RoleSelectScreen({super.key});
 
@@ -18,12 +16,9 @@ class RoleSelectScreen extends StatefulWidget {
 }
 
 class _RoleSelectScreenState extends State<RoleSelectScreen> {
-  String? _selectedRole;
   bool _isLoading = false;
 
-  Future<void> _handleContinue() async {
-    if (_selectedRole == null) return;
-
+  Future<void> _selectRole(String role) async {
     setState(() => _isLoading = true);
 
     final authProvider = context.read<AuthProvider>();
@@ -41,14 +36,14 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
       uid: uid,
       name: '',
       phone: phone,
-      role: _selectedRole!,
+      role: role,
     );
 
     await userProvider.createUser(newUser);
 
     if (!mounted) return;
 
-    if (_selectedRole == UserRole.freelancer) {
+    if (role == UserRole.freelancer) {
       Navigator.of(context).pushReplacementNamed('/provider-setup');
     } else {
       Navigator.of(context).pushReplacementNamed('/client-setup');
@@ -57,160 +52,188 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth > 900;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // White background
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 900),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 60),
+
+              // Header
+              const Text(
+                '⚒️',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 48),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'How will you use Forge?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppTheme.textDark,
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You can switch roles anytime from your profile.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppTheme.textMedium,
+                  fontSize: 14,
+                ),
+              ),
+
+              const SizedBox(height: 48),
+
+              // Freelancer card
+              _RoleCard(
+                emoji: '👩‍🔧',
+                title: 'I Offer Services',
+                subtitle:
+                    'Create your professional profile, accept jobs, and build your reputation.',
+                color: AppTheme.primary,
+                isLoading: _isLoading,
+                onTap: () => _selectRole(UserRole.freelancer),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Client card
+              _RoleCard(
+                emoji: '👤',
+                title: 'I Need Services',
+                subtitle:
+                    'Browse skilled professionals, book services, and leave reviews.',
+                color: const Color(0xFF2E7D32),
+                isLoading: _isLoading,
+                onTap: () => _selectRole(UserRole.client),
+              ),
+
+              const Spacer(),
+
+              // Footer
+              const Text(
+                'Forge — Women\'s Services Marketplace',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppTheme.textMedium,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleCard extends StatefulWidget {
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _RoleCard({
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  @override
+  State<_RoleCard> createState() => _RoleCardState();
+}
+
+class _RoleCardState extends State<_RoleCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _hovered ? widget.color : widget.color.withValues(alpha: 0.2),
+            width: _hovered ? 2 : 1,
+          ),
+          boxShadow: _hovered
+              ? [BoxShadow(color: widget.color.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 6))]
+              : [BoxShadow(color: widget.color.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.isLoading ? null : widget.onTap,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
                 children: [
-                  // Forge Logo Icon
-                  Container(
+                  // Emoji circle
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(16),
+                      color: _hovered
+                          ? widget.color
+                          : widget.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.handyman_rounded,
-                      color: Colors.white,
-                      size: 36,
-                    ),
+                    alignment: Alignment.center,
+                    child: Text(widget.emoji, style: const TextStyle(fontSize: 32)),
                   ),
-                  const SizedBox(height: 32),
-
-                  // Title
-                  const Text(
-                    'How will you use Forge?',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF2D2D2D),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Subtitle
-                  const Text(
-                    'You can switch roles anytime from your profile.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15, color: Color(0xFF666666)),
-                  ),
-                  const SizedBox(height: 56),
-
-                  // Role Cards
-                  if (isDesktop) ...[
-                    // Side-by-side layout for desktop
-                    Row(
+                  const SizedBox(width: 16),
+                  // Text
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: RoleCard(
-                            icon: Icons.work_outline_rounded,
-                            title: 'I Offer Services',
-                            description:
-                                'Create your professional profile, accept jobs, and build your reputation.',
-                            accentColor: AppTheme.primary,
-                            isSelected: _selectedRole == UserRole.freelancer,
-                            onTap: () => setState(
-                              () => _selectedRole = UserRole.freelancer,
-                            ),
+                        Text(
+                          widget.title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: widget.color,
                           ),
                         ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: RoleCard(
-                            icon: Icons.person_outline_rounded,
-                            title: 'I Need Services',
-                            description:
-                                'Browse skilled professionals, book services, and leave reviews.',
-                            accentColor: AppTheme.tertiary,
-                            isSelected: _selectedRole == UserRole.client,
-                            onTap: () =>
-                                setState(() => _selectedRole = UserRole.client),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.subtitle,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textMedium,
+                            height: 1.4,
                           ),
                         ),
                       ],
                     ),
-                  ] else ...[
-                    // Stacked layout for tablet and mobile
-                    RoleCard(
-                      icon: Icons.work_outline_rounded,
-                      title: 'I Offer Services',
-                      description:
-                          'Create your professional profile, accept jobs, and build your reputation.',
-                      accentColor: AppTheme.primary,
-                      isSelected: _selectedRole == UserRole.freelancer,
-                      onTap: () =>
-                          setState(() => _selectedRole = UserRole.freelancer),
-                    ),
-                    const SizedBox(height: 20),
-                    RoleCard(
-                      icon: Icons.person_outline_rounded,
-                      title: 'I Need Services',
-                      description:
-                          'Browse skilled professionals, book services, and leave reviews.',
-                      accentColor: AppTheme.tertiary,
-                      isSelected: _selectedRole == UserRole.client,
-                      onTap: () =>
-                          setState(() => _selectedRole = UserRole.client),
-                    ),
-                  ],
-                  const SizedBox(height: 48),
-
-                  // Continue Button
-                  SizedBox(
-                    width: isDesktop ? 400 : double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _selectedRole == null || _isLoading
-                          ? null
-                          : _handleContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        disabledBackgroundColor: const Color(0xFFE0E0E0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: _selectedRole != null ? 2 : 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Continue',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Footer
-                  const Text(
-                    'Forge — Women\'s Services Marketplace',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Color(0xFF999999)),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: _hovered ? widget.color.withValues(alpha: 0.1) : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.arrow_forward_ios, color: widget.color, size: 18),
                   ),
                 ],
               ),

@@ -12,14 +12,15 @@ import 'providers/user_provider.dart';
 import 'providers/job_provider.dart';
 import 'providers/chat_provider.dart';
 
+// Screens - Landing
+import 'screens/landing/landing_page.dart';
+
 // Screens - Auth
+import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_page.dart';
 import 'screens/auth/signup_page.dart';
 import 'screens/auth/otp_verify_screen.dart';
-import 'screens/auth/aadhaar_input_screen.dart';
-import 'screens/auth/aadhaar_otp_verify_screen.dart';
 import 'screens/auth/role_select_screen.dart';
-import 'screens/landing/landing_page.dart';
 
 // Screens - Provider
 import 'screens/provider/provider_setup_screen.dart';
@@ -41,7 +42,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const ForgeApp());
 }
@@ -62,7 +65,7 @@ class ForgeApp extends StatelessWidget {
         // Job workflow provider
         ChangeNotifierProvider(create: (_) => JobProvider()),
 
-        // Chat provider
+        // Chat notifications provider
         ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
@@ -72,17 +75,19 @@ class ForgeApp extends StatelessWidget {
         // ── Theme ───────────────────────────────────────
         theme: AppTheme.lightTheme,
 
-        // ── Home: Landing Page (shown immediately, persists until user navigates)
-        home: const LandingPage(),
+        // ── Initial Route ───────────────────────────────
+        initialRoute: '/',
 
-        // ── Named Routes (for navigation from landing page)
+        // ── Named Routes ────────────────────────────────
         routes: {
+          // Landing
+          '/': (context) => const LandingPage(),
+
           // Auth flow
+          '/splash': (context) => const SplashScreen(),
           '/login': (context) => const LoginPage(),
           '/signup': (context) => const SignupPage(),
           '/otp-verify': (context) => const OtpVerifyScreen(),
-          '/aadhaar-input': (context) => const AadhaarInputScreen(),
-          '/aadhaar-otp-verify': (context) => const AadhaarOtpVerifyScreen(),
           '/role-select': (context) => const RoleSelectScreen(),
 
           // Provider flow

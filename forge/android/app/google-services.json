@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1013441431325",
+    "project_id": "forge-3e31f",
+    "storage_bucket": "forge-3e31f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013441431325:android:8ead3b3aa28734d13f03f4",
+        "android_client_info": {
+          "package_name": "com.example.forge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2Cxs29Z52QpQQnySB6V91rWbuhqCc-eY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

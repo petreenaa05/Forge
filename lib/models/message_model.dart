@@ -40,6 +40,7 @@ class ConversationModel {
   final String lastMessage;
   final DateTime updatedAt;
   final String jobId;
+  final Map<String, bool> unreadBy; // uid -> hasUnread
 
   const ConversationModel({
     required this.id,
@@ -48,6 +49,7 @@ class ConversationModel {
     required this.lastMessage,
     required this.updatedAt,
     required this.jobId,
+    this.unreadBy = const {},
   });
 
   factory ConversationModel.fromMap(Map<String, dynamic> map, String id) {
@@ -60,6 +62,7 @@ class ConversationModel {
           ? (map['updatedAt'] as Timestamp).toDate()
           : DateTime.now(),
       jobId: map['jobId'] ?? '',
+      unreadBy: Map<String, bool>.from(map['unreadBy'] ?? {}),
     );
   }
 
@@ -70,6 +73,7 @@ class ConversationModel {
       'lastMessage': lastMessage,
       'updatedAt': Timestamp.fromDate(updatedAt),
       'jobId': jobId,
+      'unreadBy': unreadBy,
     };
   }
 }
